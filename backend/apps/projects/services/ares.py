@@ -164,13 +164,15 @@ class AresService:
         if not validate_ico(ico):
             raise InvalidIcoError(f'Neplatné IČO: {ico}')
 
-        # Check cache first
+        # Check cache first (gracefully handle Redis unavailability)
         cache_key = _get_cache_key(ico)
-        cached_data = cache.get(cache_key)
-
-        if cached_data:
-            logger.debug(f'ARES cache hit for IČO: {ico}')
-            return AresCompanyData(**cached_data)
+        try:
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                logger.debug(f'ARES cache hit for IČO: {ico}')
+                return AresCompanyData(**cached_data)
+        except Exception as e:
+            logger.warning(f'Cache unavailable, skipping cache lookup: {e}')
 
         # Fetch from ARES API
         logger.info(f'Fetching ARES data for IČO: {ico}')
@@ -204,18 +206,21 @@ class AresService:
         # Parse response
         company_data = self._parse_response(ico, data)
 
-        # Cache the result
-        cache.set(
-            cache_key,
-            {
-                'ico': company_data.ico,
-                'name': company_data.name,
-                'dic': company_data.dic,
-                'address': company_data.address,
-                'legal_form': company_data.legal_form,
-            },
-            CACHE_TIMEOUT
-        )
+        # Cache the result (gracefully handle Redis unavailability)
+        try:
+            cache.set(
+                cache_key,
+                {
+                    'ico': company_data.ico,
+                    'name': company_data.name,
+                    'dic': company_data.dic,
+                    'address': company_data.address,
+                    'legal_form': company_data.legal_form,
+                },
+                CACHE_TIMEOUT
+            )
+        except Exception as e:
+            logger.warning(f'Cache unavailable, skipping cache set: {e}')
 
         return company_data
 
