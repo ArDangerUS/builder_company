@@ -6,6 +6,7 @@ import LoginPage from './pages/auth/LoginPage'
 import DashboardPage from './pages/dashboard/DashboardPage'
 import { ProjectsListPage, ProjectFormPage, ProjectDetailPage } from './pages/projects'
 import { InvoicesListPage, InvoiceFormPage, InvoiceDetailPage } from './pages/invoices'
+import { ReportsPage } from './pages/reports'
 
 // Protected Route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -62,7 +63,7 @@ function App() {
           <Route path="invoices/new" element={<InvoiceFormPage />} />
           <Route path="invoices/:id" element={<InvoiceDetailPage />} />
           <Route path="invoices/:id/edit" element={<InvoiceFormPage />} />
-          <Route path="reports" element={<div>Reporty</div>} />
+          <Route path="reports" element={<ReportsPage />} />
           <Route path="settings" element={<div>Nastavení</div>} />
           <Route path="users" element={<div>Uživatelé</div>} />
         </Route>

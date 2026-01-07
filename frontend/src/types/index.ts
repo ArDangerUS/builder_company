@@ -328,3 +328,162 @@ export interface InvoiceStats {
   total_paid: string
   total_outstanding: string
 }
+
+// Dashboard types
+export interface DashboardStats {
+  active_projects: number
+  invoiced_this_month: number
+  paid_this_month: number
+  total_outstanding: number
+  overdue_count: number
+}
+
+export interface InvoicesByMonth {
+  month: string
+  month_name: string
+  issued: number
+  paid: number
+}
+
+export interface ProjectsByStatus {
+  status: string
+  status_display: string
+  count: number
+}
+
+export interface TopProject {
+  id: number
+  name: string
+  number: string
+  planned_budget: number
+  actual_costs: number
+}
+
+export interface RecentProject {
+  id: number
+  number: string
+  name: string
+  client_name: string
+  status: string
+  status_display: string
+  created_at: string
+}
+
+export interface RecentInvoice {
+  id: number
+  number: string
+  client_name: string
+  status: string
+  status_display: string
+  issue_date: string
+  due_date: string
+  total_amount: number
+}
+
+export interface OverdueInvoice {
+  id: number
+  number: string
+  client_name: string
+  total_amount: number
+  amount_due: number
+  due_date: string
+  days_overdue: number
+}
+
+export interface DashboardData {
+  stats: DashboardStats
+  charts: {
+    invoices_by_month: InvoicesByMonth[]
+    projects_by_status: ProjectsByStatus[]
+    top_projects: TopProject[]
+  }
+  recent: {
+    projects: RecentProject[]
+    invoices: RecentInvoice[]
+    overdue_invoices: OverdueInvoice[]
+  }
+}
+
+// Report types
+export interface ProjectReportItem {
+  id: number
+  number: string
+  name: string
+  client_name: string
+  manager_name: string
+  status: string
+  status_display: string
+  planned_budget: number
+  actual_costs: number
+  invoiced_amount: number
+  paid_amount: number
+  outstanding: number
+}
+
+export interface ProjectReportTotals {
+  planned_budget: number
+  actual_costs: number
+  invoiced_amount: number
+  paid_amount: number
+  outstanding: number
+}
+
+export interface ProjectReportData {
+  data: ProjectReportItem[]
+  totals: ProjectReportTotals
+  count: number
+}
+
+export interface InvoiceReportItem {
+  id: number
+  number: string
+  issue_date: string
+  project_number: string
+  project_name: string
+  client_name: string
+  total_amount: number
+  paid_amount: number
+  amount_due: number
+  due_date: string
+  status: string
+  status_display: string
+  days_overdue: number
+  is_overdue: boolean
+}
+
+export interface InvoiceReportTotals {
+  total_amount: number
+  paid_amount: number
+  amount_due: number
+}
+
+export interface InvoiceReportData {
+  data: InvoiceReportItem[]
+  totals: InvoiceReportTotals
+  count: number
+}
+
+export interface DebtReportItem {
+  client_name: string
+  client_ico: string
+  unpaid_count: number
+  total_debt: number
+  oldest_invoice_date: string | null
+  oldest_invoice_number: string | null
+  max_days_overdue: number
+  invoices: {
+    id: number
+    number: string
+    amount_due: number
+    due_date: string
+  }[]
+}
+
+export interface DebtReportData {
+  data: DebtReportItem[]
+  totals: {
+    unpaid_count: number
+    total_debt: number
+  }
+  count: number
+}
