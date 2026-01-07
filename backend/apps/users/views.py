@@ -1,4 +1,5 @@
 from django.contrib.auth import logout
+from django.db.models import Q
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -194,9 +195,9 @@ class UserViewSet(viewsets.ModelViewSet):
         search = self.request.query_params.get('search')
         if search:
             queryset = queryset.filter(
-                models.Q(email__icontains=search) |
-                models.Q(first_name__icontains=search) |
-                models.Q(last_name__icontains=search)
+                Q(email__icontains=search) |
+                Q(first_name__icontains=search) |
+                Q(last_name__icontains=search)
             )
 
         return queryset.order_by('last_name', 'first_name')

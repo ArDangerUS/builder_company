@@ -58,6 +58,7 @@ yarn-error.log*
 # Build
 frontend/dist/
 *.local
+*.tsbuildinfo
 
 # OS
 .DS_Store
