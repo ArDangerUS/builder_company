@@ -127,15 +127,16 @@ class DashboardView(APIView):
             item['status_display'] = status_labels.get(item['status'], item['status'])
 
         # Top 5 projects by budget
-        top_projects = list(
-            Project.objects.filter(planned_budget__gt=0)
-            .order_by('-planned_budget')[:5]
-            .values('id', 'name', 'number', 'planned_budget', 'actual_costs')
-        )
-
-        for proj in top_projects:
-            proj['planned_budget'] = float(proj['planned_budget'])
-            proj['actual_costs'] = float(proj['actual_costs'] or 0)
+        top_projects_qs = Project.objects.filter(planned_budget__gt=0).order_by('-planned_budget')[:5]
+        top_projects = []
+        for proj in top_projects_qs:
+            top_projects.append({
+                'id': proj.id,
+                'name': proj.name,
+                'number': proj.number,
+                'planned_budget': float(proj.planned_budget),
+                'actual_costs': float(proj.actual_costs or 0),
+            })
 
         # Recent projects (5)
         recent_projects = list(
