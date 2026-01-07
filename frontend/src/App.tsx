@@ -4,6 +4,7 @@ import { useAuthStore } from './store/authStore'
 import MainLayout from './components/layout/MainLayout'
 import LoginPage from './pages/auth/LoginPage'
 import DashboardPage from './pages/dashboard/DashboardPage'
+import { ProjectsListPage, ProjectFormPage, ProjectDetailPage } from './pages/projects'
 
 // Protected Route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -51,7 +52,10 @@ function App() {
           }
         >
           <Route index element={<DashboardPage />} />
-          <Route path="projects" element={<div>Projekty</div>} />
+          <Route path="projects" element={<ProjectsListPage />} />
+          <Route path="projects/new" element={<ProjectFormPage />} />
+          <Route path="projects/:id" element={<ProjectDetailPage />} />
+          <Route path="projects/:id/edit" element={<ProjectFormPage />} />
           <Route path="warehouse" element={<div>Sklad</div>} />
           <Route path="invoices" element={<div>Faktury</div>} />
           <Route path="reports" element={<div>Reporty</div>} />
