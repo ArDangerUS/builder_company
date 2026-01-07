@@ -5,6 +5,7 @@ import MainLayout from './components/layout/MainLayout'
 import LoginPage from './pages/auth/LoginPage'
 import DashboardPage from './pages/dashboard/DashboardPage'
 import { ProjectsListPage, ProjectFormPage, ProjectDetailPage } from './pages/projects'
+import { InvoicesListPage, InvoiceFormPage, InvoiceDetailPage } from './pages/invoices'
 
 // Protected Route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -57,7 +58,10 @@ function App() {
           <Route path="projects/:id" element={<ProjectDetailPage />} />
           <Route path="projects/:id/edit" element={<ProjectFormPage />} />
           <Route path="warehouse" element={<div>Sklad</div>} />
-          <Route path="invoices" element={<div>Faktury</div>} />
+          <Route path="invoices" element={<InvoicesListPage />} />
+          <Route path="invoices/new" element={<InvoiceFormPage />} />
+          <Route path="invoices/:id" element={<InvoiceDetailPage />} />
+          <Route path="invoices/:id/edit" element={<InvoiceFormPage />} />
           <Route path="reports" element={<div>Reporty</div>} />
           <Route path="settings" element={<div>Nastavení</div>} />
           <Route path="users" element={<div>Uživatelé</div>} />

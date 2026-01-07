@@ -186,3 +186,145 @@ export interface ProjectFinances {
   budget_remaining: string
   budget_usage_percent: number
 }
+
+// Invoice types
+export type InvoiceStatus = 'draft' | 'issued' | 'partially_paid' | 'paid' | 'overdue' | 'cancelled'
+export type PaymentMethod = 'cash' | 'bank' | 'card'
+export type InvoiceItemUnit = 'ks' | 'hod' | 'm' | 'm2' | 'm3' | 'kg' | 't' | 'km' | 'den' | 'komplet'
+
+export interface InvoiceItem {
+  id?: number
+  name: string
+  description: string
+  quantity: number
+  unit: InvoiceItemUnit
+  unit_display?: string
+  unit_price: number
+  total_price?: number
+  order: number
+}
+
+export interface Payment {
+  id: number
+  invoice: number
+  payment_date: string
+  amount: string
+  payment_method: PaymentMethod
+  payment_method_display: string
+  document_number: string
+  notes: string
+  created_at: string
+  created_by: number | null
+  created_by_name: string
+}
+
+export interface InvoiceHistory {
+  id: number
+  action: string
+  action_display: string
+  description: string
+  old_value: string
+  new_value: string
+  user: number | null
+  user_name: string
+  created_at: string
+}
+
+export interface InvoiceListItem {
+  id: number
+  number: string
+  client_name: string
+  project: number
+  project_name: string
+  project_number: string
+  status: InvoiceStatus
+  status_display: string
+  issue_date: string
+  due_date: string
+  total_amount: string
+  paid_amount: string
+  amount_due: string
+  is_overdue: boolean
+  items_count: number
+  created_at: string
+}
+
+export interface Invoice {
+  id: number
+  number: string
+  issue_date: string
+  due_date: string
+  taxable_date: string | null
+  project: number
+  project_name: string
+  project_number: string
+  client_name: string
+  client_ico: string
+  client_dic: string
+  client_address: string
+  status: InvoiceStatus
+  status_display: string
+  notes: string
+  internal_notes: string
+  bank_account: string
+  variable_symbol: string
+  total_amount: string
+  paid_amount: string
+  amount_due: string
+  is_overdue: boolean
+  is_editable: boolean
+  items: InvoiceItem[]
+  payments: Payment[]
+  created_at: string
+  updated_at: string
+  created_by: number | null
+  created_by_name: string
+  updated_by: number | null
+  updated_by_name: string
+}
+
+export interface InvoiceCreateData {
+  project: number
+  issue_date?: string
+  due_date: string
+  taxable_date?: string | null
+  client_name?: string
+  client_ico?: string
+  client_dic?: string
+  client_address?: string
+  notes?: string
+  internal_notes?: string
+  bank_account?: string
+  variable_symbol?: string
+  items?: InvoiceItem[]
+}
+
+export interface PaymentCreateData {
+  payment_date: string
+  amount: number
+  payment_method: PaymentMethod
+  document_number?: string
+  notes?: string
+}
+
+export interface ProjectForInvoice {
+  id: number
+  number: string
+  name: string
+  client_name: string
+  client_ico: string
+  client_dic: string
+  client_address: string
+}
+
+export interface InvoiceStats {
+  total_count: number
+  draft_count: number
+  issued_count: number
+  partially_paid_count: number
+  paid_count: number
+  overdue_count: number
+  total_invoiced: string
+  total_paid: string
+  total_outstanding: string
+}
