@@ -131,7 +131,7 @@ const StockReportPage = () => {
       dataIndex: 'type',
       key: 'type',
       width: 100,
-      render: (type: string, record) => (
+      render: (_type: string, record) => (
         <Tag color={record.direction === '+' ? 'green' : 'red'}>
           {record.direction === '+' ? (
             <><ArrowUpOutlined /> Prijem</>

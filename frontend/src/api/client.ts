@@ -86,7 +86,7 @@ export const handleApiError = (error: unknown): string => {
 }
 
 // Helper function to create FormData from object
-export const createFormData = (data: Record<string, unknown>): FormData => {
+export const createFormData = <T extends object>(data: T): FormData => {
   const formData = new FormData()
   Object.entries(data).forEach(([key, value]) => {
     if (value !== null && value !== undefined) {
