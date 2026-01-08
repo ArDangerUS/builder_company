@@ -54,7 +54,7 @@ const statusColors: Record<ProjectStatus, string> = {
 
 const invoiceStatusColors: Record<InvoiceStatus, string> = {
   draft: 'default',
-  sent: 'processing',
+  issued: 'processing',
   paid: 'success',
   partially_paid: 'warning',
   overdue: 'error',
@@ -63,7 +63,7 @@ const invoiceStatusColors: Record<InvoiceStatus, string> = {
 
 const invoiceStatusLabels: Record<InvoiceStatus, string> = {
   draft: 'Koncept',
-  sent: 'Odesláno',
+  issued: 'Odesláno',
   paid: 'Zaplaceno',
   partially_paid: 'Částečně zaplaceno',
   overdue: 'Po splatnosti',
