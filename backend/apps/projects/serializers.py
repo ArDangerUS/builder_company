@@ -36,6 +36,9 @@ class ProjectFileSerializer(serializers.ModelSerializer):
 
 class ProjectFileUploadSerializer(serializers.ModelSerializer):
     """Serializer for uploading project files."""
+    name = serializers.CharField(required=False, allow_blank=True)
+    file_type = serializers.CharField(required=False, default='document')
+    description = serializers.CharField(required=False, allow_blank=True, default='')
 
     class Meta:
         model = ProjectFile
@@ -49,6 +52,12 @@ class ProjectFileUploadSerializer(serializers.ModelSerializer):
                 'Soubor je příliš velký. Maximum je 50 MB.'
             )
         return value
+
+    def validate(self, data):
+        # Auto-set name from filename if not provided
+        if not data.get('name') and 'file' in data:
+            data['name'] = data['file'].name
+        return data
 
 
 class ProjectHistorySerializer(serializers.ModelSerializer):
