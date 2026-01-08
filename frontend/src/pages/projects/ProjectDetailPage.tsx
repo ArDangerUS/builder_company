@@ -33,6 +33,7 @@ import {
   FileImageOutlined,
   FileExcelOutlined,
   FileWordOutlined,
+  FolderOpenOutlined,
 } from '@ant-design/icons'
 import type { UploadProps } from 'antd'
 
@@ -118,18 +119,45 @@ const ProjectDetailPage = () => {
 
   const uploadProps: UploadProps = {
     name: 'file',
-    multiple: false,
+    multiple: true,
     showUploadList: false,
+    directory: false,
     customRequest: async ({ file, onSuccess, onError }) => {
       try {
         await projectsApi.uploadFile(Number(id), file as File, {})
-        message.success('Soubor byl nahrán')
+        message.success(`Soubor "${(file as File).name}" byl nahrán`)
         refetchFiles()
         queryClient.invalidateQueries({ queryKey: ['project', id] })
         onSuccess?.({})
       } catch {
-        message.error('Nepodařilo se nahrát soubor')
+        message.error(`Nepodařilo se nahrát soubor "${(file as File).name}"`)
         onError?.(new Error('Upload failed'))
+      }
+    },
+  }
+
+  const uploadFolderProps: UploadProps = {
+    name: 'file',
+    multiple: true,
+    showUploadList: false,
+    directory: true,
+    customRequest: async ({ file, onSuccess, onError }) => {
+      try {
+        await projectsApi.uploadFile(Number(id), file as File, {})
+        refetchFiles()
+        queryClient.invalidateQueries({ queryKey: ['project', id] })
+        onSuccess?.({})
+      } catch {
+        onError?.(new Error('Upload failed'))
+      }
+    },
+    onChange: (info) => {
+      const { status } = info.file
+      if (status === 'done') {
+        const allDone = info.fileList.every(f => f.status === 'done')
+        if (allDone) {
+          message.success(`Nahráno ${info.fileList.length} souborů`)
+        }
       }
     },
   }
@@ -368,9 +396,14 @@ const ProjectDetailPage = () => {
       label: `Soubory (${project.files_count})`,
       children: (
         <Space direction="vertical" style={{ width: '100%' }}>
-          <Upload {...uploadProps}>
-            <Button icon={<UploadOutlined />}>Nahrát soubor</Button>
-          </Upload>
+          <Space>
+            <Upload {...uploadProps}>
+              <Button icon={<UploadOutlined />}>Nahrát soubory</Button>
+            </Upload>
+            <Upload {...uploadFolderProps}>
+              <Button icon={<FolderOpenOutlined />}>Nahrát složku</Button>
+            </Upload>
+          </Space>
           <Table
             columns={fileColumns}
             dataSource={files}
