@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   Layout,
@@ -21,6 +21,8 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  AppstoreOutlined,
+  UnorderedListOutlined,
 } from '@ant-design/icons'
 
 import { useAuthStore } from '../../store/authStore'
@@ -35,46 +37,79 @@ const MainLayout = () => {
   const { user, logout } = useAuthStore()
   const { token } = theme.useToken()
 
-  const menuItems: MenuProps['items'] = [
-    {
-      key: '/',
-      icon: <DashboardOutlined />,
-      label: 'Dashboard',
-    },
-    {
-      key: '/projects',
-      icon: <ProjectOutlined />,
-      label: 'Projekty',
-    },
-    {
-      key: '/warehouse',
-      icon: <InboxOutlined />,
-      label: 'Sklad',
-    },
-    {
-      key: '/invoices',
-      icon: <FileTextOutlined />,
-      label: 'Faktury',
-    },
-    {
-      key: '/reports',
-      icon: <BarChartOutlined />,
-      label: 'Reporty',
-    },
-    {
-      type: 'divider',
-    },
-    {
-      key: '/users',
-      icon: <TeamOutlined />,
-      label: 'Uživatelé',
-    },
-    {
+  // Check user permissions
+  const isAdmin = user?.role === 'admin'
+  const canViewReports = ['admin', 'manager', 'accountant'].includes(user?.role || '')
+  const canViewInvoices = ['admin', 'manager', 'accountant'].includes(user?.role || '')
+
+  const menuItems: MenuProps['items'] = useMemo(() => {
+    const items: MenuProps['items'] = [
+      {
+        key: '/',
+        icon: <DashboardOutlined />,
+        label: 'Dashboard',
+      },
+      {
+        key: '/projects',
+        icon: <ProjectOutlined />,
+        label: 'Projekty',
+      },
+      {
+        key: 'warehouse',
+        icon: <InboxOutlined />,
+        label: 'Sklad',
+        children: [
+          {
+            key: '/warehouse/materials',
+            icon: <AppstoreOutlined />,
+            label: 'Materiály',
+          },
+          {
+            key: '/warehouse/reports',
+            icon: <UnorderedListOutlined />,
+            label: 'Přehled skladu',
+          },
+        ],
+      },
+    ]
+
+    // Invoices - visible to admin, manager, accountant
+    if (canViewInvoices) {
+      items.push({
+        key: '/invoices',
+        icon: <FileTextOutlined />,
+        label: 'Faktury',
+      })
+    }
+
+    // Reports - visible to admin, manager, accountant
+    if (canViewReports) {
+      items.push({
+        key: '/reports',
+        icon: <BarChartOutlined />,
+        label: 'Reporty',
+      })
+    }
+
+    items.push({ type: 'divider' })
+
+    // Users - only admin
+    if (isAdmin) {
+      items.push({
+        key: '/users',
+        icon: <TeamOutlined />,
+        label: 'Uživatelé',
+      })
+    }
+
+    items.push({
       key: '/settings',
       icon: <SettingOutlined />,
       label: 'Nastavení',
-    },
-  ]
+    })
+
+    return items
+  }, [isAdmin, canViewReports, canViewInvoices])
 
   const userMenuItems: MenuProps['items'] = [
     {
@@ -139,6 +174,7 @@ const MainLayout = () => {
         <Menu
           mode="inline"
           selectedKeys={[location.pathname]}
+          defaultOpenKeys={['warehouse']}
           items={menuItems}
           onClick={handleMenuClick}
           style={{ borderRight: 0 }}

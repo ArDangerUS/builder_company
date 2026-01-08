@@ -597,3 +597,212 @@ export interface WorkTypeCreateData {
   description?: string
   is_active?: boolean
 }
+
+// Warehouse types
+export type MaterialUnit = 'ks' | 'm' | 'm2' | 'm3' | 'kg' | 't' | 'l' | 'bal' | 'rol' | 'sada'
+export type DocumentStatus = 'draft' | 'posted' | 'cancelled'
+
+export interface Category {
+  id: number
+  name: string
+  description: string
+  is_active: boolean
+  order: number
+  materials_count?: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CategoryListItem {
+  id: number
+  name: string
+  is_active: boolean
+  order: number
+}
+
+export interface Material {
+  id: number
+  name: string
+  sku: string
+  category: number
+  category_name: string
+  unit: MaterialUnit
+  purchase_price: string
+  current_stock: string
+  min_stock: string
+  supplier: number | null
+  supplier_name: string
+  photo: string | null
+  photo_url: string | null
+  notes: string
+  is_active: boolean
+  is_low_stock: boolean
+  stock_value: string
+  created_at: string
+  updated_at: string
+}
+
+export interface MaterialListItem {
+  id: number
+  name: string
+  sku: string
+  category: number
+  category_name: string
+  unit: MaterialUnit
+  purchase_price: string
+  current_stock: string
+  min_stock: string
+  supplier_name: string
+  is_active: boolean
+  is_low_stock: boolean
+  stock_value: string
+}
+
+export interface MaterialCreateData {
+  name: string
+  sku: string
+  category: number
+  unit?: MaterialUnit
+  purchase_price?: string
+  min_stock?: string
+  supplier?: number | null
+  notes?: string
+  is_active?: boolean
+  photo?: File | null
+}
+
+export interface StockReceiptItem {
+  id?: number
+  material: number
+  material_name?: string
+  material_sku?: string
+  material_unit?: string
+  quantity: string
+  unit_price: string
+  total_price?: string
+}
+
+export interface StockReceipt {
+  id: number
+  number: string
+  receipt_date: string
+  supplier: number
+  supplier_name: string
+  responsible: number
+  responsible_name: string
+  status: DocumentStatus
+  status_display: string
+  invoice_number: string
+  invoice_file: string | null
+  invoice_file_url: string | null
+  notes: string
+  items: StockReceiptItem[]
+  total_amount: string
+  is_editable: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface StockReceiptListItem {
+  id: number
+  number: string
+  receipt_date: string
+  supplier_name: string
+  responsible_name: string
+  status: DocumentStatus
+  status_display: string
+  total_amount: string
+  items_count: number
+}
+
+export interface StockReceiptCreateData {
+  receipt_date: string
+  supplier: number
+  invoice_number?: string
+  invoice_file?: File | null
+  notes?: string
+  items: StockReceiptItem[]
+}
+
+export interface StockWriteOffItem {
+  id?: number
+  material: number
+  material_name?: string
+  material_sku?: string
+  material_unit?: string
+  quantity: string
+  unit_price?: string
+  total_price?: string
+  available_stock?: string
+}
+
+export interface StockWriteOff {
+  id: number
+  number: string
+  writeoff_date: string
+  project: number
+  project_name: string
+  responsible: number
+  responsible_name: string
+  status: DocumentStatus
+  status_display: string
+  notes: string
+  items: StockWriteOffItem[]
+  total_amount: string
+  is_editable: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface StockWriteOffListItem {
+  id: number
+  number: string
+  writeoff_date: string
+  project_name: string
+  responsible_name: string
+  status: DocumentStatus
+  status_display: string
+  total_amount: string
+  items_count: number
+}
+
+export interface StockWriteOffCreateData {
+  writeoff_date: string
+  project: number
+  notes?: string
+  items: StockWriteOffItem[]
+}
+
+export interface StockReport {
+  materials: MaterialListItem[]
+  summary: {
+    total_materials: number
+    total_value: number
+    low_stock_count: number
+  }
+}
+
+export interface StockMovement {
+  date: string
+  type: 'receipt' | 'writeoff'
+  document_number: string
+  material_name: string
+  material_sku: string
+  quantity: string
+  unit_price: string
+  total_price: string
+  direction: '+' | '-'
+  supplier: string | null
+  project: string | null
+}
+
+export interface StockMovementsReport {
+  movements: StockMovement[]
+  summary: {
+    total_movements: number
+    total_receipts: number
+    total_writeoffs: number
+    total_value_in: number
+    total_value_out: number
+  }
+}

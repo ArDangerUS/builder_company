@@ -18,7 +18,7 @@ urlpatterns = [
         path('invoices/', include('apps.invoices.urls')),
         path('reports/', include('apps.reports.urls')),
         path('settings/', include('apps.settings_app.urls')),
-        # path('warehouse/', include('apps.warehouse.urls')),
+        path('warehouse/', include('apps.warehouse.urls')),
         # path('notifications/', include('apps.notifications.urls')),
     ])),
 
