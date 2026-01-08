@@ -8,10 +8,10 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from apps.users.models import User
-from apps.projects.models import Project, Supplier, WorkType
+from apps.projects.models import Project
 from apps.invoices.models import Invoice, InvoiceItem
 from apps.warehouse.models import Category, Material
-from apps.settings.models import CompanySettings
+from apps.settings_app.models import CompanySettings, Supplier, WorkType
 
 
 class Command(BaseCommand):
