@@ -38,7 +38,8 @@ import {
 import type { UploadProps } from 'antd'
 
 import { projectsApi } from '../../api/projects'
-import { ProjectStatus, ProjectFile, ProjectHistory } from '../../types'
+import { invoicesApi } from '../../api/invoices'
+import { ProjectStatus, ProjectFile, ProjectHistory, InvoiceListItem, InvoiceStatus } from '../../types'
 import { formatCurrency, formatDate, formatDateTime } from '../../utils'
 
 const { Title, Text } = Typography
@@ -49,6 +50,24 @@ const statusColors: Record<ProjectStatus, string> = {
   suspended: 'warning',
   completed: 'success',
   cancelled: 'error',
+}
+
+const invoiceStatusColors: Record<InvoiceStatus, string> = {
+  draft: 'default',
+  sent: 'processing',
+  paid: 'success',
+  partially_paid: 'warning',
+  overdue: 'error',
+  cancelled: 'default',
+}
+
+const invoiceStatusLabels: Record<InvoiceStatus, string> = {
+  draft: 'Koncept',
+  sent: 'Odesláno',
+  paid: 'Zaplaceno',
+  partially_paid: 'Částečně zaplaceno',
+  overdue: 'Po splatnosti',
+  cancelled: 'Zrušeno',
 }
 
 const getFileIcon = (extension: string) => {
@@ -103,6 +122,12 @@ const ProjectDetailPage = () => {
     queryKey: ['project-history', id],
     queryFn: () => projectsApi.getHistory(Number(id)),
     enabled: activeTab === 'history',
+  })
+
+  const { data: invoicesData, isLoading: isLoadingInvoices } = useQuery({
+    queryKey: ['project-invoices', id],
+    queryFn: () => invoicesApi.list({ project: Number(id) }),
+    enabled: activeTab === 'invoices',
   })
 
   const deleteFileMutation = useMutation({
@@ -384,11 +409,70 @@ const ProjectDetailPage = () => {
     },
     {
       key: 'invoices',
-      label: 'Faktury',
-      children: (
-        <Empty description="Modul faktur bude implementován">
-          <Button type="primary">Vytvořit fakturu</Button>
-        </Empty>
+      label: `Faktury (${invoicesData?.count || 0})`,
+      children: isLoadingInvoices ? (
+        <Spin />
+      ) : (
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <Button
+            type="primary"
+            onClick={() => navigate(`/invoices/new?project=${id}`)}
+          >
+            Vytvořit fakturu
+          </Button>
+          <Table
+            columns={[
+              {
+                title: 'Číslo',
+                dataIndex: 'number',
+                key: 'number',
+                render: (number: string, record: InvoiceListItem) => (
+                  <a onClick={() => navigate(`/invoices/${record.id}`)}>{number}</a>
+                ),
+              },
+              {
+                title: 'Stav',
+                dataIndex: 'status',
+                key: 'status',
+                render: (status: InvoiceStatus) => (
+                  <Tag color={invoiceStatusColors[status]}>
+                    {invoiceStatusLabels[status]}
+                  </Tag>
+                ),
+              },
+              {
+                title: 'Datum vystavení',
+                dataIndex: 'issue_date',
+                key: 'issue_date',
+                render: (date: string) => formatDate(date),
+              },
+              {
+                title: 'Splatnost',
+                dataIndex: 'due_date',
+                key: 'due_date',
+                render: (date: string) => formatDate(date),
+              },
+              {
+                title: 'Celkem',
+                dataIndex: 'total_amount',
+                key: 'total_amount',
+                align: 'right' as const,
+                render: (amount: string) => formatCurrency(parseFloat(amount)),
+              },
+              {
+                title: 'Zaplaceno',
+                dataIndex: 'paid_amount',
+                key: 'paid_amount',
+                align: 'right' as const,
+                render: (amount: string) => formatCurrency(parseFloat(amount)),
+              },
+            ]}
+            dataSource={invoicesData?.results || []}
+            rowKey="id"
+            pagination={false}
+            locale={{ emptyText: 'Žádné faktury' }}
+          />
+        </Space>
       ),
     },
     {
