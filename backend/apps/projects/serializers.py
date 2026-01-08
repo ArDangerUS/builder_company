@@ -42,21 +42,12 @@ class ProjectFileUploadSerializer(serializers.ModelSerializer):
         fields = ['file', 'name', 'file_type', 'description']
 
     def validate_file(self, value):
-        # Max 20MB
-        if value.size > 20 * 1024 * 1024:
+        # Max 50MB
+        max_size = 50 * 1024 * 1024
+        if value.size > max_size:
             raise serializers.ValidationError(
-                'Soubor je příliš velký. Maximum je 20 MB.'
+                'Soubor je příliš velký. Maximum je 50 MB.'
             )
-
-        # Check extension
-        import os
-        ext = os.path.splitext(value.name)[1].lower()
-        allowed = ['.pdf', '.jpg', '.jpeg', '.png', '.docx', '.xlsx', '.dwg']
-        if ext not in allowed:
-            raise serializers.ValidationError(
-                f'Nepodporovaný typ souboru. Povolené: {", ".join(allowed)}'
-            )
-
         return value
 
 
