@@ -26,8 +26,8 @@ RUN pip install --upgrade pip && \
 # Copy project
 COPY . .
 
-# Create directories for static and media files
-RUN mkdir -p /app/staticfiles /app/media
+# Create directories for static, media, and log files
+RUN mkdir -p /app/staticfiles /app/media /var/log/django
 
 # Collect static files
 RUN python manage.py collectstatic --noinput --settings=config.settings.prod || true
