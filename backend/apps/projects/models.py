@@ -161,6 +161,12 @@ class Project(AuditMixin, models.Model):
         verbose_name = 'Projekt'
         verbose_name_plural = 'Projekty'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['number']),
+            models.Index(fields=['status']),
+            models.Index(fields=['manager']),
+            models.Index(fields=['client_name']),
+        ]
 
     def __str__(self):
         return f'{self.number} - {self.name}'
