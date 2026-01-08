@@ -25,6 +25,17 @@ class IsManager(BasePermission):
                 (request.user.is_admin or request.user.is_manager))
 
 
+class IsWarehouse(BasePermission):
+    """
+    Permission that only allows warehouse staff or admins.
+    """
+    message = 'Přístup povolen pouze skladníkům.'
+
+    def has_permission(self, request, view):
+        return (request.user and request.user.is_authenticated and
+                request.user.role in ['admin', 'warehouse'])
+
+
 class IsAccountant(BasePermission):
     """
     Permission that only allows accountants, managers, or admins.

@@ -6,6 +6,7 @@ import LoginPage from './pages/auth/LoginPage'
 import DashboardPage from './pages/dashboard/DashboardPage'
 import { ProjectsListPage, ProjectFormPage, ProjectDetailPage } from './pages/projects'
 import { InvoicesListPage, InvoiceFormPage, InvoiceDetailPage } from './pages/invoices'
+import { MaterialsPage, MaterialFormPage, StockReportPage } from './pages/warehouse'
 import { ReportsPage } from './pages/reports'
 import { SettingsPage } from './pages/settings'
 
@@ -59,7 +60,10 @@ function App() {
           <Route path="projects/new" element={<ProjectFormPage />} />
           <Route path="projects/:id" element={<ProjectDetailPage />} />
           <Route path="projects/:id/edit" element={<ProjectFormPage />} />
-          <Route path="warehouse" element={<div>Sklad</div>} />
+          <Route path="warehouse/materials" element={<MaterialsPage />} />
+          <Route path="warehouse/materials/new" element={<MaterialFormPage />} />
+          <Route path="warehouse/materials/:id/edit" element={<MaterialFormPage />} />
+          <Route path="warehouse/reports" element={<StockReportPage />} />
           <Route path="invoices" element={<InvoicesListPage />} />
           <Route path="invoices/new" element={<InvoiceFormPage />} />
           <Route path="invoices/:id" element={<InvoiceDetailPage />} />

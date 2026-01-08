@@ -30,6 +30,11 @@ app.conf.beat_schedule = {
         'task': 'apps.notifications.tasks.check_invoice_due_soon',
         'schedule': crontab(hour=9, minute=0),
     },
+    # Check low stock materials every day at 8:00 AM
+    'check-low-stock': {
+        'task': 'apps.warehouse.tasks.check_low_stock',
+        'schedule': crontab(hour=8, minute=0),
+    },
 }
 
 app.conf.timezone = 'Europe/Prague'
