@@ -447,35 +447,25 @@ class Command(BaseCommand):
 
         invoices_data = [
             {
-                'invoice_type': 'issued',
                 'issue_date': today - timedelta(days=14),
                 'due_date': today,
                 'status': 'paid',
-                'paid_date': today - timedelta(days=5),
+                'client_name': project.client_name,
+                'client_address': project.client_address if hasattr(project, 'client_address') else '',
                 'items': [
-                    {'description': 'Stavebni prace - 1. etapa', 'quantity': 1, 'unit_price': Decimal('150000.00')},
-                    {'description': 'Material - cihly, cement', 'quantity': 1, 'unit_price': Decimal('45000.00')},
+                    {'name': 'Stavebni prace - 1. etapa', 'quantity': 1, 'unit_price': Decimal('150000.00')},
+                    {'name': 'Material - cihly, cement', 'quantity': 1, 'unit_price': Decimal('45000.00')},
                 ]
             },
             {
-                'invoice_type': 'issued',
                 'issue_date': today - timedelta(days=7),
                 'due_date': today + timedelta(days=7),
                 'status': 'sent',
+                'client_name': project.client_name,
+                'client_address': project.client_address if hasattr(project, 'client_address') else '',
                 'items': [
-                    {'description': 'Stavebni prace - 2. etapa', 'quantity': 1, 'unit_price': Decimal('180000.00')},
-                    {'description': 'Elektroinstalace', 'quantity': 1, 'unit_price': Decimal('65000.00')},
-                ]
-            },
-            {
-                'invoice_type': 'received',
-                'supplier': suppliers[0] if suppliers else None,
-                'issue_date': today - timedelta(days=20),
-                'due_date': today - timedelta(days=6),
-                'status': 'paid',
-                'paid_date': today - timedelta(days=8),
-                'items': [
-                    {'description': 'Dodavka stavebniho materialu', 'quantity': 1, 'unit_price': Decimal('78000.00')},
+                    {'name': 'Stavebni prace - 2. etapa', 'quantity': 1, 'unit_price': Decimal('180000.00')},
+                    {'name': 'Elektroinstalace', 'quantity': 1, 'unit_price': Decimal('65000.00')},
                 ]
             },
         ]
