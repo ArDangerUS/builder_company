@@ -65,4 +65,41 @@ apiClient.interceptors.response.use(
   }
 )
 
+// Named export for convenience
+export const api = apiClient
+
+// Helper function to handle API errors
+export const handleApiError = (error: unknown): string => {
+  if (axios.isAxiosError(error)) {
+    const axiosError = error as AxiosError<{ detail?: string; message?: string }>
+    if (axiosError.response?.data?.detail) {
+      return axiosError.response.data.detail
+    }
+    if (axiosError.response?.data?.message) {
+      return axiosError.response.data.message
+    }
+    if (axiosError.message) {
+      return axiosError.message
+    }
+  }
+  return 'Nastala neočekávaná chyba'
+}
+
+// Helper function to create FormData from object
+export const createFormData = (data: Record<string, unknown>): FormData => {
+  const formData = new FormData()
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== null && value !== undefined) {
+      if (value instanceof File) {
+        formData.append(key, value)
+      } else if (typeof value === 'object') {
+        formData.append(key, JSON.stringify(value))
+      } else {
+        formData.append(key, String(value))
+      }
+    }
+  })
+  return formData
+}
+
 export default apiClient
