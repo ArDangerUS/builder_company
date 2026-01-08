@@ -1,6 +1,10 @@
+"""
+Celery configuration for the construction accounting system.
+"""
 import os
 
 from celery import Celery
+from celery.schedules import crontab
 
 # Set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.dev')
@@ -13,6 +17,22 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Load task modules from all registered Django apps.
 app.autodiscover_tasks()
+
+# Celery Beat schedule for periodic tasks
+app.conf.beat_schedule = {
+    # Check overdue invoices every day at 9:00 AM
+    'check-overdue-invoices': {
+        'task': 'apps.notifications.tasks.check_overdue_invoices',
+        'schedule': crontab(hour=9, minute=0),
+    },
+    # Check invoices due soon every day at 9:00 AM
+    'check-invoice-due-soon': {
+        'task': 'apps.notifications.tasks.check_invoice_due_soon',
+        'schedule': crontab(hour=9, minute=0),
+    },
+}
+
+app.conf.timezone = 'Europe/Prague'
 
 
 @app.task(bind=True, ignore_result=True)

@@ -7,6 +7,7 @@ import DashboardPage from './pages/dashboard/DashboardPage'
 import { ProjectsListPage, ProjectFormPage, ProjectDetailPage } from './pages/projects'
 import { InvoicesListPage, InvoiceFormPage, InvoiceDetailPage } from './pages/invoices'
 import { ReportsPage } from './pages/reports'
+import { SettingsPage } from './pages/settings'
 
 // Protected Route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -64,7 +65,7 @@ function App() {
           <Route path="invoices/:id" element={<InvoiceDetailPage />} />
           <Route path="invoices/:id/edit" element={<InvoiceFormPage />} />
           <Route path="reports" element={<ReportsPage />} />
-          <Route path="settings" element={<div>Nastavení</div>} />
+          <Route path="settings" element={<SettingsPage />} />
           <Route path="users" element={<div>Uživatelé</div>} />
         </Route>
 

@@ -222,20 +222,58 @@ TRANSLATIONS = {
     }
 }
 
-# Company info (can be moved to settings or database)
-COMPANY_INFO = {
-    'name': 'BuilderCompany s.r.o.',
-    'address': 'Stavební 123\n110 00 Praha 1\nČeská republika',
-    'ico': '12345678',
-    'dic': 'CZ12345678',
-    'bank_name': 'Česká spořitelna',
-    'bank_account': '123456789/0800',
-    'iban': 'CZ6508000000000123456789',
-    'swift': 'GIBACZPX',
-    'phone': '+420 123 456 789',
-    'email': 'info@buildercompany.cz',
-    'web': 'www.buildercompany.cz',
-}
+def get_company_info(lang: str = 'cs') -> dict:
+    """
+    Get company info from CompanySettings model.
+    Falls back to default values if settings not found.
+    """
+    try:
+        from apps.settings_app.models import CompanySettings
+        settings_obj = CompanySettings.get_settings()
+
+        company_name = settings_obj.company_name_cs if lang == 'cs' else (
+            settings_obj.company_name_en or settings_obj.company_name_cs
+        )
+
+        return {
+            'name': company_name,
+            'address': settings_obj.full_address,
+            'ico': settings_obj.ico,
+            'dic': settings_obj.dic,
+            'bank_name': settings_obj.bank_name,
+            'bank_account': settings_obj.bank_account,
+            'iban': settings_obj.iban,
+            'swift': settings_obj.swift,
+            'phone': settings_obj.phone,
+            'email': settings_obj.email,
+            'web': settings_obj.website,
+            'registration_court': settings_obj.registration_court,
+            'invoice_notes': settings_obj.invoice_notes,
+            'logo_path': settings_obj.logo.path if settings_obj.logo else None,
+            'stamp_path': settings_obj.stamp.path if settings_obj.stamp else None,
+            'signature_path': settings_obj.signature.path if settings_obj.signature else None,
+        }
+    except Exception as e:
+        logger.warning(f'Failed to load company settings: {e}')
+        # Fallback to defaults
+        return {
+            'name': 'BuilderCompany s.r.o.',
+            'address': 'Stavební 123\n110 00 Praha 1\nČeská republika',
+            'ico': '12345678',
+            'dic': 'CZ12345678',
+            'bank_name': 'Česká spořitelna',
+            'bank_account': '123456789/0800',
+            'iban': 'CZ6508000000000123456789',
+            'swift': 'GIBACZPX',
+            'phone': '+420 123 456 789',
+            'email': 'info@buildercompany.cz',
+            'web': 'www.buildercompany.cz',
+            'registration_court': '',
+            'invoice_notes': '',
+            'logo_path': None,
+            'stamp_path': None,
+            'signature_path': None,
+        }
 
 
 class InvoicePDFGenerator:
@@ -260,11 +298,12 @@ class InvoicePDFGenerator:
         Prepare context data for the PDF template.
         """
         total_amount = self.invoice.total_amount
+        company_info = get_company_info(self.lang)
 
         return {
             'invoice': self.invoice,
             'items': self.invoice.items.all(),
-            'company': COMPANY_INFO,
+            'company': company_info,
             't': self.translations,
             'lang': self.lang,
             'total_amount': total_amount,

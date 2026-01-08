@@ -487,3 +487,113 @@ export interface DebtReportData {
   }
   count: number
 }
+
+// Settings types
+export interface CompanySettings {
+  id: number
+  company_name_cs: string
+  company_name_en: string
+  ico: string
+  dic: string
+  street: string
+  city: string
+  postal_code: string
+  country: string
+  full_address: string
+  phone: string
+  email: string
+  website: string
+  bank_name: string
+  bank_account: string
+  iban: string
+  swift: string
+  logo: string | null
+  logo_url: string | null
+  stamp: string | null
+  stamp_url: string | null
+  signature: string | null
+  signature_url: string | null
+  invoice_notes: string
+  registration_court: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CompanySettingsUpdate {
+  company_name_cs?: string
+  company_name_en?: string
+  ico?: string
+  dic?: string
+  street?: string
+  city?: string
+  postal_code?: string
+  country?: string
+  phone?: string
+  email?: string
+  website?: string
+  bank_name?: string
+  bank_account?: string
+  iban?: string
+  swift?: string
+  invoice_notes?: string
+  registration_court?: string
+  logo?: File | null
+  stamp?: File | null
+  signature?: File | null
+}
+
+export interface Supplier {
+  id: number
+  name: string
+  ico: string
+  dic: string
+  contact_person: string
+  phone: string
+  email: string
+  address: string
+  bank_account: string
+  notes: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface SupplierListItem {
+  id: number
+  name: string
+  ico: string
+  contact_person: string
+  phone: string
+  email: string
+  is_active: boolean
+}
+
+export interface SupplierCreateData {
+  name: string
+  ico?: string
+  dic?: string
+  contact_person?: string
+  phone?: string
+  email?: string
+  address?: string
+  bank_account?: string
+  notes?: string
+  is_active?: boolean
+}
+
+export interface WorkType {
+  id: number
+  name: string
+  code: string
+  description: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface WorkTypeCreateData {
+  name: string
+  code?: string
+  description?: string
+  is_active?: boolean
+}
