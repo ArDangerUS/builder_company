@@ -125,13 +125,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
         # POST - upload file
         serializer = ProjectFileUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        validated = serializer.validated_data
 
         project_file = ProjectFile.objects.create(
             project=project,
-            file=serializer.validated_data['file'],
-            name=serializer.validated_data.get('name', ''),
-            file_type=serializer.validated_data.get('file_type', 'document'),
-            description=serializer.validated_data.get('description', ''),
+            file=validated['file'],
+            name=validated.get('name') or validated['file'].name,
+            file_type=validated.get('file_type', 'document'),
+            description=validated.get('description', ''),
             created_by=request.user,
             updated_by=request.user
         )
