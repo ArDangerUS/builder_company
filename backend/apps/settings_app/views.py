@@ -62,6 +62,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
     """
     permission_classes = [IsAuthenticated]
     serializer_class = SupplierSerializer
+    pagination_class = None  # Disable pagination for simple list
 
     def get_queryset(self):
         queryset = Supplier.objects.all()
@@ -96,6 +97,7 @@ class WorkTypeViewSet(viewsets.ModelViewSet):
     """
     permission_classes = [IsAuthenticated]
     serializer_class = WorkTypeSerializer
+    pagination_class = None  # Disable pagination for simple list
 
     def get_queryset(self):
         queryset = WorkType.objects.all()
