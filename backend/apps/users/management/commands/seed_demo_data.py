@@ -135,17 +135,17 @@ class Command(BaseCommand):
         settings, created = CompanySettings.objects.get_or_create(
             id=1,
             defaults={
-                'company_name': 'Builder Company s.r.o.',
+                'company_name_cs': 'Builder Company s.r.o.',
+                'company_name_en': 'Builder Company Ltd.',
                 'ico': '12345678',
                 'dic': 'CZ12345678',
-                'address': 'Stavebni 123',
+                'street': 'Stavebni 123',
                 'city': 'Praha',
                 'postal_code': '11000',
                 'phone': '+420 222 111 111',
                 'email': 'info@builder-company.cz',
+                'bank_name': 'Komercni banka',
                 'bank_account': '123456789/0100',
-                'invoice_prefix': 'FAK',
-                'invoice_due_days': 14,
             }
         )
         if created:
