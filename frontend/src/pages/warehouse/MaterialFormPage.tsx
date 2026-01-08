@@ -10,14 +10,12 @@ import {
   Col,
   Select,
   InputNumber,
-  Upload,
   Switch,
   Spin,
   message,
   Typography,
 } from 'antd'
-import { ArrowLeftOutlined, SaveOutlined, UploadOutlined } from '@ant-design/icons'
-import type { UploadFile } from 'antd/es/upload/interface'
+import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons'
 
 import { warehouseApi } from '../../api/warehouse'
 import { settingsApi } from '../../api/settings'
@@ -60,7 +58,7 @@ const MaterialFormPage = () => {
 
   const { data: suppliers } = useQuery({
     queryKey: ['suppliers'],
-    queryFn: () => settingsApi.getSuppliers({ is_active: true }),
+    queryFn: () => settingsApi.listSuppliers({ is_active: true }),
   })
 
   const createMutation = useMutation({
@@ -205,7 +203,7 @@ const MaterialFormPage = () => {
             <Col xs={24} md={8}>
               <Form.Item name="supplier" label="Dodavatel">
                 <Select placeholder="Vyberte dodavatele" allowClear>
-                  {suppliers?.map((sup) => (
+                  {suppliers?.map((sup: { id: number; name: string }) => (
                     <Option key={sup.id} value={sup.id}>
                       {sup.name}
                     </Option>
