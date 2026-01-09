@@ -460,7 +460,7 @@ class Command(BaseCommand):
             {
                 'issue_date': today - timedelta(days=7),
                 'due_date': today + timedelta(days=7),
-                'status': 'sent',
+                'status': 'issued',
                 'client_name': project.client_name,
                 'client_address': project.client_address if hasattr(project, 'client_address') else '',
                 'items': [
