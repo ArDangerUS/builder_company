@@ -260,7 +260,10 @@ class AresService:
         legal_form = None
         pravni_forma = data.get('pravniForma')
         if pravni_forma:
-            legal_form = pravni_forma.get('nazev', '')
+            if isinstance(pravni_forma, dict):
+                legal_form = pravni_forma.get('nazev', '')
+            else:
+                legal_form = str(pravni_forma)
 
         return AresCompanyData(
             ico=ico,
