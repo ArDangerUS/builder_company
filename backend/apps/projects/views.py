@@ -102,6 +102,39 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 user=self.request.user
             )
 
+    def destroy(self, request, *args, **kwargs):
+        """Delete a project with validation."""
+        project = self.get_object()
+
+        # Check for related invoices
+        invoices_count = project.invoices.count()
+        if invoices_count > 0:
+            return Response(
+                {'detail': f'Nelze smazat projekt s fakturami ({invoices_count}). Nejprve smažte faktury.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check for stock write-offs
+        writeoffs_count = project.stock_writeoffs.count() if hasattr(project, 'stock_writeoffs') else 0
+        if writeoffs_count > 0:
+            return Response(
+                {'detail': f'Nelze smazat projekt s výdejkami ({writeoffs_count}). Nejprve smažte výdejky.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Delete related files first
+        for file in project.files.all():
+            file.file.delete(save=False)
+            file.delete()
+
+        # Delete history
+        project.history.all().delete()
+
+        # Delete project
+        project.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @action(detail=True, methods=['get'])
     def history(self, request, pk=None):
         """Get project history."""
