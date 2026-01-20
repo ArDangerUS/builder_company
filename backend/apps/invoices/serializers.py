@@ -74,6 +74,7 @@ class InvoiceHistorySerializer(serializers.ModelSerializer):
 class InvoiceListSerializer(serializers.ModelSerializer):
     """Serializer for invoice list view."""
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    invoice_type_display = serializers.CharField(source='get_invoice_type_display', read_only=True)
     project_name = serializers.CharField(source='project.name', read_only=True)
     project_number = serializers.CharField(source='project.number', read_only=True)
     total_amount = serializers.DecimalField(
@@ -91,7 +92,8 @@ class InvoiceListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invoice
         fields = [
-            'id', 'number', 'client_name', 'project', 'project_name', 'project_number',
+            'id', 'number', 'invoice_type', 'invoice_type_display',
+            'client_name', 'project', 'project_name', 'project_number',
             'status', 'status_display', 'issue_date', 'due_date',
             'total_amount', 'paid_amount', 'amount_due', 'is_overdue',
             'items_count', 'created_at'
@@ -104,6 +106,7 @@ class InvoiceListSerializer(serializers.ModelSerializer):
 class InvoiceSerializer(serializers.ModelSerializer):
     """Serializer for invoice detail view."""
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    invoice_type_display = serializers.CharField(source='get_invoice_type_display', read_only=True)
     project_name = serializers.CharField(source='project.name', read_only=True)
     project_number = serializers.CharField(source='project.number', read_only=True)
     total_amount = serializers.DecimalField(
@@ -129,7 +132,8 @@ class InvoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invoice
         fields = [
-            'id', 'number', 'issue_date', 'due_date', 'taxable_date',
+            'id', 'number', 'invoice_type', 'invoice_type_display',
+            'issue_date', 'due_date', 'taxable_date',
             'project', 'project_name', 'project_number',
             'client_name', 'client_ico', 'client_dic', 'client_address',
             'status', 'status_display', 'notes', 'internal_notes',
@@ -163,7 +167,7 @@ class InvoiceCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invoice
         fields = [
-            'project', 'issue_date', 'due_date', 'taxable_date',
+            'project', 'invoice_type', 'issue_date', 'due_date', 'taxable_date',
             'client_name', 'client_ico', 'client_dic', 'client_address',
             'notes', 'internal_notes', 'bank_account', 'variable_symbol',
             'items'
