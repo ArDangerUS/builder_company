@@ -1,10 +1,14 @@
 """
 Production settings for builder_company project.
 """
-import sentry_sdk
-from sentry_sdk.integrations.celery import CeleryIntegration
-from sentry_sdk.integrations.django import DjangoIntegration
-from sentry_sdk.integrations.redis import RedisIntegration
+try:
+    import sentry_sdk
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.redis import RedisIntegration
+    HAS_SENTRY = True
+except ImportError:
+    HAS_SENTRY = False
 
 from .base import *  # noqa: F401, F403
 
@@ -27,7 +31,7 @@ CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')  # noqa:
 
 # Sentry
 SENTRY_DSN = os.getenv('SENTRY_DSN', '')  # noqa: F405
-if SENTRY_DSN:
+if SENTRY_DSN and HAS_SENTRY:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[
