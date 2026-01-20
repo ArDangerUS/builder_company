@@ -19,6 +19,7 @@ redis==5.2.1
 
 # PDF Generation
 WeasyPrint==63.1
+qrcode==7.4.2
 
 # File handling
 Pillow==11.1.0
