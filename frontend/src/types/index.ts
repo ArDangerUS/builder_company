@@ -189,6 +189,7 @@ export interface ProjectFinances {
 
 // Invoice types
 export type InvoiceStatus = 'draft' | 'issued' | 'partially_paid' | 'paid' | 'overdue' | 'cancelled'
+export type InvoiceType = 'vydana' | 'prijata' | 'zalohova' | 'dobropis'
 export type PaymentMethod = 'cash' | 'bank' | 'card'
 export type InvoiceItemUnit = 'ks' | 'hod' | 'm' | 'm2' | 'm3' | 'kg' | 't' | 'km' | 'den' | 'komplet'
 
@@ -233,6 +234,8 @@ export interface InvoiceHistory {
 export interface InvoiceListItem {
   id: number
   number: string
+  invoice_type: InvoiceType
+  invoice_type_display: string
   client_name: string
   project: number
   project_name: string
@@ -252,6 +255,8 @@ export interface InvoiceListItem {
 export interface Invoice {
   id: number
   number: string
+  invoice_type: InvoiceType
+  invoice_type_display: string
   issue_date: string
   due_date: string
   taxable_date: string | null
@@ -285,6 +290,7 @@ export interface Invoice {
 
 export interface InvoiceCreateData {
   project: number
+  invoice_type?: InvoiceType
   issue_date?: string
   due_date: string
   taxable_date?: string | null

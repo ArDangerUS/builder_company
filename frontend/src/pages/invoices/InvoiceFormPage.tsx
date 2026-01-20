@@ -34,6 +34,13 @@ import type { InvoiceCreateData, InvoiceItemUnit, ProjectForInvoice } from '../.
 const { Title } = Typography
 const { TextArea } = Input
 
+const invoiceTypeOptions = [
+  { label: 'Faktura vydaná', value: 'vydana' },
+  { label: 'Faktura přijatá', value: 'prijata' },
+  { label: 'Zálohová faktura', value: 'zalohova' },
+  { label: 'Dobropis', value: 'dobropis' },
+]
+
 const unitOptions = [
   { label: 'ks', value: 'ks' },
   { label: 'hod', value: 'hod' },
@@ -121,6 +128,7 @@ export default function InvoiceFormPage() {
     if (invoice) {
       form.setFieldsValue({
         project: invoice.project,
+        invoice_type: invoice.invoice_type,
         issue_date: dayjs(invoice.issue_date),
         due_date: dayjs(invoice.due_date),
         taxable_date: invoice.taxable_date ? dayjs(invoice.taxable_date) : null,
@@ -201,6 +209,7 @@ export default function InvoiceFormPage() {
   const handleSubmit = async (values: Record<string, unknown>) => {
     const data: InvoiceCreateData = {
       project: values.project as number,
+      invoice_type: values.invoice_type as InvoiceCreateData['invoice_type'],
       issue_date: (values.issue_date as dayjs.Dayjs)?.format('YYYY-MM-DD'),
       due_date: (values.due_date as dayjs.Dayjs).format('YYYY-MM-DD'),
       taxable_date: (values.taxable_date as dayjs.Dayjs)?.format('YYYY-MM-DD') || undefined,
@@ -363,6 +372,7 @@ export default function InvoiceFormPage() {
         layout="vertical"
         onFinish={handleSubmit}
         initialValues={{
+          invoice_type: 'vydana',
           issue_date: dayjs(),
           due_date: dayjs().add(14, 'day'),
         }}
@@ -389,6 +399,17 @@ export default function InvoiceFormPage() {
                         label: `${p.number} - ${p.name}`,
                         value: p.id,
                       }))}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="invoice_type"
+                    label="Typ faktury"
+                    rules={[{ required: true, message: 'Vyberte typ faktury' }]}
+                  >
+                    <Select
+                      options={invoiceTypeOptions}
                     />
                   </Form.Item>
                 </Col>

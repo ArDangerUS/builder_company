@@ -2,14 +2,22 @@
 PDF generation service for invoices using WeasyPrint.
 Supports Czech and English languages.
 """
+import base64
 import logging
 from decimal import Decimal
 from io import BytesIO
-from typing import Literal
+from typing import Literal, Optional
 
 from django.conf import settings
 from django.template.loader import render_to_string
 from weasyprint import HTML, CSS
+
+try:
+    import qrcode
+    from qrcode.image.pure import PyPNGImage
+    HAS_QRCODE = True
+except ImportError:
+    HAS_QRCODE = False
 
 logger = logging.getLogger(__name__)
 
@@ -164,61 +172,169 @@ def amount_to_words(amount: Decimal, lang: str = 'cs') -> str:
         return f'{words} crowns'
 
 
+def generate_qr_payment_code(
+    iban: str,
+    amount: Decimal,
+    variable_symbol: str,
+    message: str = '',
+    currency: str = 'CZK'
+) -> Optional[str]:
+    """
+    Generate QR code for Czech payment (SPD format).
+
+    The SPD (Short Payment Descriptor) format is used by Czech banks
+    for easy payment via QR code scanning.
+
+    Args:
+        iban: IBAN of the recipient account
+        amount: Payment amount
+        variable_symbol: Variable symbol for the payment
+        message: Optional message
+        currency: Currency code (default CZK)
+
+    Returns:
+        Base64 encoded PNG image string, or None if qrcode not available
+    """
+    if not HAS_QRCODE:
+        logger.warning('qrcode library not available, skipping QR code generation')
+        return None
+
+    if not iban:
+        logger.warning('No IBAN provided, skipping QR code generation')
+        return None
+
+    # Build SPD string
+    # Format: SPD*1.0*ACC:IBAN*AM:AMOUNT*CC:CURRENCY*X-VS:VS*MSG:MESSAGE
+    spd_parts = [
+        'SPD*1.0',
+        f'ACC:{iban.replace(" ", "")}',
+        f'AM:{amount:.2f}',
+        f'CC:{currency}',
+    ]
+
+    if variable_symbol:
+        spd_parts.append(f'X-VS:{variable_symbol}')
+
+    if message:
+        # Clean message - only alphanumeric and spaces allowed
+        clean_message = ''.join(c for c in message if c.isalnum() or c == ' ')[:60]
+        if clean_message:
+            spd_parts.append(f'MSG:{clean_message}')
+
+    spd_string = '*'.join(spd_parts)
+
+    try:
+        # Generate QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=10,
+            border=2,
+        )
+        qr.add_data(spd_string)
+        qr.make(fit=True)
+
+        # Create image
+        img = qr.make_image(fill_color='black', back_color='white')
+
+        # Convert to base64
+        buffer = BytesIO()
+        img.save(buffer, format='PNG')
+        buffer.seek(0)
+
+        return base64.b64encode(buffer.read()).decode('utf-8')
+    except Exception as e:
+        logger.error(f'Failed to generate QR code: {e}')
+        return None
+
+
 # Translation strings
 TRANSLATIONS = {
     'cs': {
         'invoice': 'FAKTURA',
+        'tax_document': 'Daňový doklad',
+        'evidence_number': 'Evidenční číslo',
         'invoice_number': 'Číslo faktury',
         'issue_date': 'Datum vystavení',
         'due_date': 'Datum splatnosti',
         'taxable_date': 'Datum zdanitelného plnění',
+        'issued': 'Vystaveno',
+        'due': 'Splatnost',
         'supplier': 'Dodavatel',
         'customer': 'Odběratel',
         'ico': 'IČO',
         'dic': 'DIČ',
+        'vat_payer': 'Plátce DPH',
         'item': 'Položka',
         'description': 'Popis',
         'quantity': 'Množství',
+        'quantity_short': 'MJ',
         'unit': 'Jednotka',
         'unit_price': 'Jednotková cena',
+        'price_excl_vat': 'Cena bez DPH',
+        'vat_rate': 'DPH',
         'total': 'Celkem',
         'total_amount': 'Celková částka',
+        'total_to_pay': 'Celkem k úhradě:',
         'amount_in_words': 'Částka slovy',
         'bank_details': 'Bankovní údaje',
         'bank_account': 'Číslo účtu',
+        'bank_account_number': 'Číslo účtu',
         'variable_symbol': 'Variabilní symbol',
+        'payment_method': 'Způsob úhrady',
+        'bank_transfer': 'Bankovním převodem',
         'payment_terms': 'Splatnost',
         'notes': 'Poznámky',
         'currency': 'Kč',
         'page': 'Strana',
         'of': 'z',
+        'qr_payment_title': 'Naskenujte QR kód pro platbu',
+        'reverse_charge_note': 'Daň odvede zákazník.',
+        'issued_by': 'Vystavil:',
+        'generated_by': 'Vygenerováno systémem',
     },
     'en': {
         'invoice': 'INVOICE',
+        'tax_document': 'Tax Document',
+        'evidence_number': 'Evidence Number',
         'invoice_number': 'Invoice Number',
         'issue_date': 'Issue Date',
         'due_date': 'Due Date',
         'taxable_date': 'Tax Date',
+        'issued': 'Issued',
+        'due': 'Due',
         'supplier': 'Supplier',
         'customer': 'Customer',
         'ico': 'Company ID',
         'dic': 'VAT ID',
+        'vat_payer': 'VAT Payer',
         'item': 'Item',
         'description': 'Description',
         'quantity': 'Quantity',
+        'quantity_short': 'Unit',
         'unit': 'Unit',
         'unit_price': 'Unit Price',
+        'price_excl_vat': 'Price excl. VAT',
+        'vat_rate': 'VAT',
         'total': 'Total',
         'total_amount': 'Total Amount',
+        'total_to_pay': 'Total to Pay:',
         'amount_in_words': 'Amount in Words',
         'bank_details': 'Bank Details',
         'bank_account': 'Account Number',
+        'bank_account_number': 'Account Number',
         'variable_symbol': 'Variable Symbol',
+        'payment_method': 'Payment Method',
+        'bank_transfer': 'Bank Transfer',
         'payment_terms': 'Payment Terms',
         'notes': 'Notes',
         'currency': 'CZK',
         'page': 'Page',
         'of': 'of',
+        'qr_payment_title': 'Scan QR code for payment',
+        'reverse_charge_note': 'VAT reverse charge applies.',
+        'issued_by': 'Issued by:',
+        'generated_by': 'Generated by',
     }
 }
 
@@ -238,6 +354,10 @@ def get_company_info(lang: str = 'cs') -> dict:
         return {
             'name': company_name,
             'address': settings_obj.full_address,
+            'street': settings_obj.street,
+            'city': settings_obj.city,
+            'postal_code': settings_obj.postal_code,
+            'country': settings_obj.country,
             'ico': settings_obj.ico,
             'dic': settings_obj.dic,
             'bank_name': settings_obj.bank_name,
@@ -258,7 +378,11 @@ def get_company_info(lang: str = 'cs') -> dict:
         # Fallback to defaults
         return {
             'name': 'BuilderCompany s.r.o.',
-            'address': 'Stavební 123\n110 00 Praha 1\nČeská republika',
+            'address': 'Stavební 123, 110 00 Praha 1',
+            'street': 'Stavební 123',
+            'city': 'Praha 1',
+            'postal_code': '110 00',
+            'country': 'Česká republika',
             'ico': '12345678',
             'dic': 'CZ12345678',
             'bank_name': 'Česká spořitelna',
@@ -300,6 +424,17 @@ class InvoicePDFGenerator:
         total_amount = self.invoice.total_amount
         company_info = get_company_info(self.lang)
 
+        # Generate QR code for payment
+        qr_code = None
+        if company_info.get('iban'):
+            variable_symbol = self.invoice.variable_symbol or self.invoice.number
+            qr_code = generate_qr_payment_code(
+                iban=company_info['iban'],
+                amount=total_amount,
+                variable_symbol=variable_symbol,
+                message=f'Faktura {self.invoice.number}',
+            )
+
         return {
             'invoice': self.invoice,
             'items': self.invoice.items.all(),
@@ -308,6 +443,7 @@ class InvoicePDFGenerator:
             'lang': self.lang,
             'total_amount': total_amount,
             'amount_in_words': amount_to_words(total_amount, self.lang),
+            'qr_code': qr_code,
         }
 
     def generate_html(self) -> str:

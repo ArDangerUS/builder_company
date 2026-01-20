@@ -114,8 +114,9 @@ const ProjectsListPage = () => {
       await projectsApi.delete(id)
       message.success('Projekt byl smazán')
       refetch()
-    } catch {
-      message.error('Nepodařilo se smazat projekt')
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { detail?: string } } }
+      message.error(err.response?.data?.detail || 'Nepodařilo se smazat projekt')
     }
   }
 

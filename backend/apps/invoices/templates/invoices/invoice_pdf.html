@@ -6,7 +6,7 @@
     <style>
         @page {
             size: A4;
-            margin: 15mm;
+            margin: 12mm 15mm;
         }
 
         * {
@@ -17,7 +17,7 @@
 
         body {
             font-family: 'DejaVu Sans', Arial, sans-serif;
-            font-size: 10pt;
+            font-size: 9pt;
             line-height: 1.4;
             color: #333;
         }
@@ -25,369 +25,445 @@
         .header {
             display: flex;
             justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #2563eb;
+        }
+
+        .company-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: #1a1a2e;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18pt;
+        }
+
+        .company-info {
+            font-size: 8pt;
+            color: #666;
         }
 
         .company-name {
-            font-size: 18pt;
+            font-size: 11pt;
             font-weight: bold;
-            color: #2563eb;
-            margin-bottom: 5px;
+            color: #333;
+            margin-bottom: 3px;
         }
 
-        .company-details {
+        .invoice-header-right {
+            text-align: right;
+        }
+
+        .invoice-title {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .invoice-evidence {
             font-size: 9pt;
             color: #666;
         }
 
-        .invoice-title {
-            text-align: right;
-        }
-
-        .invoice-title h1 {
-            font-size: 24pt;
-            color: #2563eb;
-            margin-bottom: 10px;
-        }
-
-        .invoice-number {
-            font-size: 12pt;
-            font-weight: bold;
-        }
-
-        .parties {
+        /* Main info section */
+        .main-section {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
+            gap: 20px;
         }
 
-        .party {
-            width: 48%;
+        .customer-section {
+            flex: 1;
         }
 
-        .party-title {
-            font-size: 11pt;
+        .info-boxes {
+            display: flex;
+            gap: 10px;
+        }
+
+        .info-box {
+            text-align: center;
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            min-width: 100px;
+        }
+
+        .info-box-label {
+            font-size: 7pt;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .info-box-value {
+            font-size: 10pt;
             font-weight: bold;
-            color: #2563eb;
+        }
+
+        .info-box.total {
+            background-color: #0066cc;
+            border-color: #0066cc;
+            color: white;
+        }
+
+        .info-box.total .info-box-label {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .section-title {
+            font-size: 8pt;
+            font-weight: bold;
+            color: #333;
+            text-transform: uppercase;
             margin-bottom: 8px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #ddd;
+            letter-spacing: 0.5px;
         }
 
-        .party-name {
-            font-size: 11pt;
+        .customer-name {
+            font-size: 10pt;
             font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        .customer-address {
+            font-size: 9pt;
+            color: #555;
             margin-bottom: 5px;
         }
 
-        .party-details {
-            font-size: 9pt;
-            color: #555;
+        .customer-ids {
+            font-size: 8pt;
+            color: #666;
         }
 
-        .dates-table {
-            width: 100%;
-            margin-bottom: 25px;
-            border-collapse: collapse;
+        /* Details table */
+        .details-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
         }
 
-        .dates-table td {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
+        .details-table {
+            font-size: 8pt;
         }
 
-        .dates-table td:first-child {
-            background-color: #f8fafc;
-            font-weight: bold;
-            width: 200px;
+        .details-table tr td {
+            padding: 3px 0;
         }
 
+        .details-table tr td:first-child {
+            color: #666;
+            padding-right: 15px;
+        }
+
+        .details-table tr td:last-child {
+            text-align: right;
+            font-weight: 500;
+        }
+
+        /* Items table */
         .items-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
         }
 
         .items-table th {
-            background-color: #2563eb;
-            color: white;
-            padding: 10px 8px;
+            background-color: #f5f5f5;
+            padding: 8px 10px;
             text-align: left;
-            font-size: 9pt;
+            font-size: 8pt;
+            font-weight: bold;
+            border-bottom: 1px solid #ddd;
+            color: #555;
         }
 
-        .items-table th:nth-child(3),
-        .items-table th:nth-child(4),
-        .items-table th:nth-child(5),
-        .items-table th:nth-child(6) {
+        .items-table th.right {
             text-align: right;
         }
 
         .items-table td {
-            padding: 8px;
-            border-bottom: 1px solid #ddd;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
             font-size: 9pt;
+            vertical-align: top;
         }
 
-        .items-table td:nth-child(3),
-        .items-table td:nth-child(4),
-        .items-table td:nth-child(5),
-        .items-table td:nth-child(6) {
+        .items-table td.right {
             text-align: right;
-        }
-
-        .items-table tr:nth-child(even) {
-            background-color: #f8fafc;
         }
 
         .items-table .item-description {
             font-size: 8pt;
-            color: #666;
-            margin-top: 3px;
+            color: #888;
+            margin-top: 2px;
         }
 
-        .totals {
+        /* Total section */
+        .total-section {
             display: flex;
             justify-content: flex-end;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
-        .totals-table {
-            width: 300px;
-            border-collapse: collapse;
-        }
-
-        .totals-table td {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-        }
-
-        .totals-table td:first-child {
-            font-weight: bold;
-        }
-
-        .totals-table td:last-child {
+        .total-box {
             text-align: right;
         }
 
-        .totals-table .grand-total {
-            background-color: #2563eb;
-            color: white;
-            font-size: 12pt;
+        .total-label {
+            font-size: 11pt;
             font-weight: bold;
+            color: #333;
         }
 
-        .amount-words {
-            background-color: #f0f9ff;
-            padding: 12px;
-            border: 1px solid #bae6fd;
-            border-radius: 4px;
-            margin-bottom: 25px;
+        .total-amount {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #333;
         }
 
-        .amount-words-title {
-            font-weight: bold;
-            color: #0369a1;
+        /* Notes */
+        .notes-section {
+            margin-bottom: 20px;
+            font-size: 8pt;
+            color: #555;
+        }
+
+        .notes-section p {
             margin-bottom: 5px;
         }
 
-        .amount-words-text {
+        .notes-italic {
             font-style: italic;
-            text-transform: capitalize;
         }
 
-        .bank-details {
-            background-color: #f8fafc;
-            padding: 15px;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            margin-bottom: 25px;
-        }
-
-        .bank-details-title {
-            font-weight: bold;
-            color: #2563eb;
-            margin-bottom: 10px;
-            font-size: 11pt;
-        }
-
-        .bank-details-grid {
+        /* QR Section */
+        .qr-section {
             display: flex;
-            flex-wrap: wrap;
+            justify-content: flex-end;
+            margin-top: 30px;
         }
 
-        .bank-detail {
-            width: 50%;
-            margin-bottom: 8px;
+        .qr-box {
+            border: 1px solid #ddd;
+            padding: 15px;
+            text-align: center;
+            max-width: 200px;
         }
 
-        .bank-detail-label {
+        .qr-title {
             font-size: 8pt;
             color: #666;
+            margin-bottom: 10px;
         }
 
-        .bank-detail-value {
+        .qr-code {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 10px;
+        }
+
+        .qr-code img {
+            width: 100%;
+            height: 100%;
+        }
+
+        .qr-label {
+            font-size: 9pt;
             font-weight: bold;
+            color: #333;
         }
 
-        .notes {
-            padding: 12px;
-            background-color: #fffbeb;
-            border: 1px solid #fde68a;
-            border-radius: 4px;
-            margin-bottom: 25px;
-        }
-
-        .notes-title {
-            font-weight: bold;
-            color: #92400e;
-            margin-bottom: 5px;
-        }
-
+        /* Footer */
         .footer {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            font-size: 7pt;
+            color: #999;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        /* Bank details inline */
+        .bank-info {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            margin-bottom: 15px;
             font-size: 8pt;
+        }
+
+        .bank-info-row {
+            display: flex;
+            gap: 30px;
+        }
+
+        .bank-info-item {
+            display: flex;
+            gap: 5px;
+        }
+
+        .bank-info-label {
             color: #666;
-            padding: 10px;
-            border-top: 1px solid #ddd;
+        }
+
+        .bank-info-value {
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
+    <!-- Header -->
     <div class="header">
-        <div class="company-info">
-            <div class="company-name">{{ company.name }}</div>
-            <div class="company-details">
-                {{ company.address|linebreaksbr }}<br>
-                {{ t.ico }}: {{ company.ico }} | {{ t.dic }}: {{ company.dic }}<br>
-                {{ company.phone }} | {{ company.email }}
+        <div class="company-logo">
+            <div class="logo-icon">{{ company.name|slice:":1" }}</div>
+            <div>
+                <div class="company-name">{{ company.name }}</div>
+                <div class="company-info">
+                    {{ company.street }}, {{ company.city }}<br>
+                    {{ company.postal_code }} {{ company.country }}<br><br>
+                    {{ t.ico }}: {{ company.ico }}<br>
+                    {{ t.dic }}: {{ company.dic }}<br>
+                    {{ t.vat_payer }}
+                </div>
             </div>
         </div>
-        <div class="invoice-title">
-            <h1>{{ t.invoice }}</h1>
-            <div class="invoice-number">{{ invoice.number }}</div>
+        <div class="invoice-header-right">
+            <div class="invoice-title">{{ invoice.get_invoice_type_display|upper }} - {{ t.tax_document|upper }} č. {{ invoice.number }}</div>
+            <div class="invoice-evidence">{{ t.evidence_number }} {{ invoice.number }}</div>
         </div>
     </div>
 
-    <div class="parties">
-        <div class="party">
-            <div class="party-title">{{ t.supplier }}</div>
-            <div class="party-name">{{ company.name }}</div>
-            <div class="party-details">
-                {{ company.address|linebreaksbr }}<br>
-                {{ t.ico }}: {{ company.ico }}<br>
-                {{ t.dic }}: {{ company.dic }}
+    <!-- Main section with customer and info boxes -->
+    <div class="main-section">
+        <div class="customer-section">
+            <div class="section-title">{{ t.customer }}</div>
+            <div class="customer-name">{{ invoice.client_name }}</div>
+            {% if invoice.client_address %}
+            <div class="customer-address">{{ invoice.client_address|linebreaksbr }}</div>
+            {% endif %}
+            <div class="customer-ids">
+                {% if invoice.client_ico %}{{ t.ico }}: {{ invoice.client_ico }}{% endif %}
+                {% if invoice.client_dic %}<br>{{ t.dic }}: {{ invoice.client_dic }}{% endif %}
             </div>
         </div>
-        <div class="party">
-            <div class="party-title">{{ t.customer }}</div>
-            <div class="party-name">{{ invoice.client_name }}</div>
-            <div class="party-details">
-                {% if invoice.client_address %}{{ invoice.client_address|linebreaksbr }}<br>{% endif %}
-                {% if invoice.client_ico %}{{ t.ico }}: {{ invoice.client_ico }}<br>{% endif %}
-                {% if invoice.client_dic %}{{ t.dic }}: {{ invoice.client_dic }}{% endif %}
+        <div class="info-boxes">
+            <div class="info-box">
+                <div class="info-box-label">{{ t.issued }}</div>
+                <div class="info-box-value">{{ invoice.issue_date|date:"d. F Y" }}</div>
+            </div>
+            <div class="info-box total">
+                <div class="info-box-label">{{ t.total }}</div>
+                <div class="info-box-value">{{ total_amount|floatformat:2 }} {{ t.currency }}</div>
+            </div>
+            <div class="info-box">
+                <div class="info-box-label">{{ t.due }}</div>
+                <div class="info-box-value">{{ invoice.due_date|date:"d. F Y" }}</div>
             </div>
         </div>
     </div>
 
-    <table class="dates-table">
-        <tr>
-            <td>{{ t.invoice_number }}:</td>
-            <td>{{ invoice.number }}</td>
-        </tr>
-        <tr>
-            <td>{{ t.issue_date }}:</td>
-            <td>{{ invoice.issue_date|date:"d.m.Y" }}</td>
-        </tr>
-        <tr>
-            <td>{{ t.taxable_date }}:</td>
-            <td>{{ invoice.taxable_date|date:"d.m.Y" }}</td>
-        </tr>
-        <tr>
-            <td>{{ t.due_date }}:</td>
-            <td><strong>{{ invoice.due_date|date:"d.m.Y" }}</strong></td>
-        </tr>
-    </table>
+    <!-- Details -->
+    <div class="details-section">
+        <table class="details-table">
+            <tr>
+                <td>{{ t.taxable_date }}:</td>
+                <td>{{ invoice.taxable_date|date:"d. m. Y"|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td>{{ t.payment_method }}:</td>
+                <td>{{ t.bank_transfer }}</td>
+            </tr>
+            <tr>
+                <td>{{ t.variable_symbol }}:</td>
+                <td>{{ invoice.variable_symbol|default:invoice.number }}</td>
+            </tr>
+            <tr>
+                <td>{{ t.bank_account_number }}:</td>
+                <td>{{ company.bank_account }}</td>
+            </tr>
+        </table>
+    </div>
 
+    <!-- Items table -->
     <table class="items-table">
         <thead>
             <tr>
-                <th style="width: 5%;">#</th>
-                <th style="width: 40%;">{{ t.item }}</th>
-                <th style="width: 12%;">{{ t.quantity }}</th>
-                <th style="width: 8%;">{{ t.unit }}</th>
-                <th style="width: 15%;">{{ t.unit_price }}</th>
-                <th style="width: 15%;">{{ t.total }}</th>
+                <th style="width: 8%;">{{ t.quantity_short }}</th>
+                <th style="width: 42%;">{{ t.description }}</th>
+                <th class="right" style="width: 12%;">{{ t.vat_rate }}</th>
+                <th class="right" style="width: 19%;">{{ t.price_excl_vat }}</th>
+                <th class="right" style="width: 19%;">{{ t.total }}</th>
             </tr>
         </thead>
         <tbody>
             {% for item in items %}
             <tr>
-                <td>{{ forloop.counter }}</td>
+                <td>{{ item.quantity|floatformat:0 }} {{ item.get_unit_display }}</td>
                 <td>
                     {{ item.name }}
                     {% if item.description %}<div class="item-description">{{ item.description }}</div>{% endif %}
                 </td>
-                <td>{{ item.quantity|floatformat:2 }}</td>
-                <td>{{ item.get_unit_display }}</td>
-                <td>{{ item.unit_price|floatformat:2 }} {{ t.currency }}</td>
-                <td>{{ item.total_price|floatformat:2 }} {{ t.currency }}</td>
+                <td class="right">21 %</td>
+                <td class="right">{{ item.unit_price|floatformat:2 }} {{ t.currency }}</td>
+                <td class="right">{{ item.total_price|floatformat:2 }} {{ t.currency }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <div class="totals">
-        <table class="totals-table">
-            <tr class="grand-total">
-                <td>{{ t.total_amount }}:</td>
-                <td>{{ total_amount|floatformat:2 }} {{ t.currency }}</td>
-            </tr>
-        </table>
-    </div>
-
-    <div class="amount-words">
-        <div class="amount-words-title">{{ t.amount_in_words }}:</div>
-        <div class="amount-words-text">{{ amount_in_words }}</div>
-    </div>
-
-    <div class="bank-details">
-        <div class="bank-details-title">{{ t.bank_details }}</div>
-        <div class="bank-details-grid">
-            <div class="bank-detail">
-                <div class="bank-detail-label">{{ t.bank_account }}:</div>
-                <div class="bank-detail-value">{{ company.bank_account }}</div>
-            </div>
-            <div class="bank-detail">
-                <div class="bank-detail-label">{{ t.variable_symbol }}:</div>
-                <div class="bank-detail-value">{{ invoice.variable_symbol }}</div>
-            </div>
-            <div class="bank-detail">
-                <div class="bank-detail-label">IBAN:</div>
-                <div class="bank-detail-value">{{ company.iban }}</div>
-            </div>
-            <div class="bank-detail">
-                <div class="bank-detail-label">SWIFT:</div>
-                <div class="bank-detail-value">{{ company.swift }}</div>
-            </div>
+    <!-- Total -->
+    <div class="total-section">
+        <div class="total-box">
+            <span class="total-label">{{ t.total_to_pay }}</span>
+            <span class="total-amount">{{ total_amount|floatformat:2 }} {{ t.currency }}</span>
         </div>
     </div>
 
+    <!-- Notes -->
     {% if invoice.notes %}
-    <div class="notes">
-        <div class="notes-title">{{ t.notes }}:</div>
-        <div>{{ invoice.notes|linebreaksbr }}</div>
+    <div class="notes-section">
+        <p class="notes-italic">{{ t.reverse_charge_note }}</p>
+        <p>{{ invoice.notes }}</p>
+    </div>
+    {% else %}
+    <div class="notes-section">
+        <p class="notes-italic">{{ t.reverse_charge_note }}</p>
     </div>
     {% endif %}
 
+    <!-- QR Code -->
+    {% if qr_code %}
+    <div class="qr-section">
+        <div class="qr-box">
+            <div class="qr-title">{{ t.qr_payment_title }}</div>
+            <div class="qr-code">
+                <img src="data:image/png;base64,{{ qr_code }}" alt="QR Platba">
+            </div>
+            <div class="qr-label">QR Platba + F</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
     <div class="footer">
-        {{ company.name }} | {{ company.address|striptags }} | {{ company.web }}
+        <span>{{ t.issued_by }} {{ invoice.created_by_name|default:"" }}</span>
+        <span>{{ t.generated_by }} BuilderCompany</span>
     </div>
 </body>
 </html>

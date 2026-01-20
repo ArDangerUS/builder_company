@@ -38,6 +38,19 @@ class Invoice(AuditMixin, models.Model):
         (STATUS_CANCELLED, 'Zrušeno'),
     ]
 
+    # Invoice type choices
+    TYPE_VYDANA = 'vydana'
+    TYPE_PRIJATA = 'prijata'
+    TYPE_ZALOHOVA = 'zalohova'
+    TYPE_DOBROPIS = 'dobropis'
+
+    TYPE_CHOICES = [
+        (TYPE_VYDANA, 'Faktura vydaná'),
+        (TYPE_PRIJATA, 'Faktura přijatá'),
+        (TYPE_ZALOHOVA, 'Zálohová faktura'),
+        (TYPE_DOBROPIS, 'Dobropis'),
+    ]
+
     # Invoice number
     number = models.CharField(
         max_length=20,
@@ -93,6 +106,14 @@ class Invoice(AuditMixin, models.Model):
         choices=STATUS_CHOICES,
         default=STATUS_DRAFT,
         verbose_name='Stav'
+    )
+
+    # Invoice type
+    invoice_type = models.CharField(
+        max_length=20,
+        choices=TYPE_CHOICES,
+        default=TYPE_VYDANA,
+        verbose_name='Typ faktury'
     )
 
     # Notes
