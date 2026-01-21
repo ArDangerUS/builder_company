@@ -10,7 +10,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Q, Sum, F
 
-from apps.users.permissions import IsAdmin, IsWarehouse, IsManager
+from apps.users.models import User
+from core.viewset_mixins import CompanyFilterMixin, CompanyCreateMixin
 from .models import (
     Category,
     Material,
@@ -36,7 +37,7 @@ from .services import StockService
 class WarehousePermission(IsAuthenticated):
     """
     Permission class for warehouse operations.
-    Admin, Warehouse - full access
+    SuperAdmin, Admin, Warehouse - full access
     Manager - can create write-offs
     Others - read only
     """
@@ -47,12 +48,12 @@ class WarehousePermission(IsAuthenticated):
 
         user = request.user
 
-        # Admin and Warehouse have full access
-        if user.role in ['admin', 'warehouse']:
+        # SuperAdmin, Admin and Warehouse have full access
+        if user.role in [User.ROLE_SUPERADMIN, User.ROLE_ADMIN, User.ROLE_WAREHOUSE]:
             return True
 
         # Manager can read and create write-offs
-        if user.role == 'manager':
+        if user.role == User.ROLE_MANAGER:
             if request.method in ['GET', 'HEAD', 'OPTIONS']:
                 return True
             if view.__class__.__name__ == 'StockWriteOffViewSet':
@@ -63,16 +64,17 @@ class WarehousePermission(IsAuthenticated):
         return request.method in ['GET', 'HEAD', 'OPTIONS']
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class CategoryViewSet(CompanyFilterMixin, CompanyCreateMixin, viewsets.ModelViewSet):
     """
     CRUD ViewSet for Categories.
     """
+    queryset = Category.objects.all()
     permission_classes = [WarehousePermission]
     serializer_class = CategorySerializer
     pagination_class = None
 
     def get_queryset(self):
-        queryset = Category.objects.all()
+        queryset = super().get_queryset()
 
         # Filter by active status
         is_active = self.request.query_params.get('is_active')
@@ -86,29 +88,30 @@ class CategoryViewSet(viewsets.ModelViewSet):
             return CategoryListSerializer
         return CategorySerializer
 
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
-
-    def perform_update(self, serializer):
-        serializer.save(updated_by=self.request.user)
-
     @action(detail=False, methods=['post'])
     def create_defaults(self, request):
-        """Create default categories."""
+        """Create default categories for the user's company."""
+        user = request.user
+        if user.is_superadmin:
+            return Response(
+                {'error': 'SuperAdmin must specify company'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         Category.create_default_categories()
         return Response({'status': 'Default categories created'})
 
 
-class MaterialViewSet(viewsets.ModelViewSet):
+class MaterialViewSet(CompanyFilterMixin, CompanyCreateMixin, viewsets.ModelViewSet):
     """
     CRUD ViewSet for Materials.
     """
+    queryset = Material.objects.select_related('category', 'supplier')
     permission_classes = [WarehousePermission]
     serializer_class = MaterialSerializer
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
-        queryset = Material.objects.select_related('category', 'supplier')
+        queryset = super().get_queryset()
 
         # Filter by active status
         is_active = self.request.query_params.get('is_active')
@@ -146,16 +149,11 @@ class MaterialViewSet(viewsets.ModelViewSet):
             return MaterialChoiceSerializer
         return MaterialSerializer
 
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
-
-    def perform_update(self, serializer):
-        serializer.save(updated_by=self.request.user)
-
     @action(detail=False, methods=['get'])
     def choices(self, request):
         """Get materials as choices for select fields."""
-        materials = Material.objects.filter(is_active=True).values(
+        queryset = self.get_queryset().filter(is_active=True)
+        materials = queryset.values(
             'id', 'name', 'sku', 'unit', 'purchase_price', 'current_stock'
         )
         return Response(list(materials))
@@ -163,23 +161,27 @@ class MaterialViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def low_stock(self, request):
         """Get materials with low stock."""
-        materials = StockService.get_low_stock_materials()
-        serializer = MaterialListSerializer(materials, many=True)
+        queryset = self.get_queryset().filter(
+            is_active=True,
+            current_stock__lt=F('min_stock')
+        )
+        serializer = MaterialListSerializer(queryset, many=True)
         return Response(serializer.data)
 
 
-class StockReceiptViewSet(viewsets.ModelViewSet):
+class StockReceiptViewSet(CompanyFilterMixin, viewsets.ModelViewSet):
     """
     CRUD ViewSet for Stock Receipts.
     """
+    queryset = StockReceipt.objects.select_related(
+        'supplier', 'responsible'
+    ).prefetch_related('items__material')
     permission_classes = [WarehousePermission]
     serializer_class = StockReceiptSerializer
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
-        queryset = StockReceipt.objects.select_related(
-            'supplier', 'responsible'
-        ).prefetch_related('items__material')
+        queryset = super().get_queryset()
 
         # Filter by status
         status_filter = self.request.query_params.get('status')
@@ -213,10 +215,14 @@ class StockReceiptViewSet(viewsets.ModelViewSet):
         return StockReceiptSerializer
 
     def perform_create(self, serializer):
-        serializer.save(
-            responsible=self.request.user,
-            created_by=self.request.user
-        )
+        user = self.request.user
+        save_kwargs = {
+            'responsible': user,
+            'created_by': user
+        }
+        if not user.is_superadmin:
+            save_kwargs['company'] = user.company
+        serializer.save(**save_kwargs)
 
     def perform_update(self, serializer):
         serializer.save(updated_by=self.request.user)
@@ -250,17 +256,18 @@ class StockReceiptViewSet(viewsets.ModelViewSet):
             )
 
 
-class StockWriteOffViewSet(viewsets.ModelViewSet):
+class StockWriteOffViewSet(CompanyFilterMixin, viewsets.ModelViewSet):
     """
     CRUD ViewSet for Stock Write-offs.
     """
+    queryset = StockWriteOff.objects.select_related(
+        'project', 'responsible'
+    ).prefetch_related('items__material')
     permission_classes = [WarehousePermission]
     serializer_class = StockWriteOffSerializer
 
     def get_queryset(self):
-        queryset = StockWriteOff.objects.select_related(
-            'project', 'responsible'
-        ).prefetch_related('items__material')
+        queryset = super().get_queryset()
 
         # Filter by status
         status_filter = self.request.query_params.get('status')
@@ -294,10 +301,14 @@ class StockWriteOffViewSet(viewsets.ModelViewSet):
         return StockWriteOffSerializer
 
     def perform_create(self, serializer):
-        serializer.save(
-            responsible=self.request.user,
-            created_by=self.request.user
-        )
+        user = self.request.user
+        save_kwargs = {
+            'responsible': user,
+            'created_by': user
+        }
+        if not user.is_superadmin:
+            save_kwargs['company'] = user.company
+        serializer.save(**save_kwargs)
 
     def perform_update(self, serializer):
         serializer.save(updated_by=self.request.user)
@@ -338,10 +349,26 @@ class StockReportView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    def get_queryset(self, request):
+        """Get queryset filtered by company."""
+        user = request.user
         queryset = Material.objects.filter(
             is_active=True
         ).select_related('category', 'supplier')
+
+        if user.is_superadmin:
+            company_id = request.query_params.get('company')
+            if company_id:
+                queryset = queryset.filter(company_id=company_id)
+        elif user.company:
+            queryset = queryset.filter(company=user.company)
+        else:
+            queryset = queryset.none()
+
+        return queryset
+
+    def get(self, request):
+        queryset = self.get_queryset(request)
 
         # Filter by category
         category = request.query_params.get('category')
@@ -380,15 +407,27 @@ class StockMovementsReportView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
+    def get_company_filter(self, request):
+        """Get company filter based on user role."""
+        user = request.user
+        if user.is_superadmin:
+            company_id = request.query_params.get('company')
+            return int(company_id) if company_id else None
+        return user.company_id if user.company else None
+
     def get(self, request):
         date_from = request.query_params.get('date_from')
         date_to = request.query_params.get('date_to')
         material_id = request.query_params.get('material')
+        company_id = self.get_company_filter(request)
 
         material = None
         if material_id:
             try:
-                material = Material.objects.get(id=material_id)
+                qs = Material.objects.all()
+                if company_id:
+                    qs = qs.filter(company_id=company_id)
+                material = qs.get(id=material_id)
             except Material.DoesNotExist:
                 return Response(
                     {'error': 'Material not found'},
@@ -411,7 +450,8 @@ class StockMovementsReportView(APIView):
         movements = StockService.get_stock_movements(
             material=material,
             date_from=date_from,
-            date_to=date_to
+            date_to=date_to,
+            company_id=company_id
         )
 
         serializer = StockMovementSerializer(movements, many=True)

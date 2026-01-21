@@ -3,10 +3,25 @@ from rest_framework.permissions import BasePermission
 from apps.users.models import User
 
 
+class IsSuperAdmin(BasePermission):
+    """
+    Permission class for superadmin users.
+    SuperAdmin has full access to all companies.
+    """
+    message = 'Přístup pouze pro SuperAdmin.'
+
+    def has_permission(self, request, view):
+        return (
+            request.user and
+            request.user.is_authenticated and
+            request.user.role == User.ROLE_SUPERADMIN
+        )
+
+
 class IsAdmin(BasePermission):
     """
     Permission class for admin users.
-    Admin has full access to everything.
+    Admin has full access to their company.
     """
     message = 'Přístup pouze pro administrátory.'
 
@@ -14,7 +29,7 @@ class IsAdmin(BasePermission):
         return (
             request.user and
             request.user.is_authenticated and
-            request.user.role == User.ROLE_ADMIN
+            request.user.role in [User.ROLE_SUPERADMIN, User.ROLE_ADMIN]
         )
 
 
@@ -29,7 +44,7 @@ class IsManager(BasePermission):
         return (
             request.user and
             request.user.is_authenticated and
-            request.user.role in [User.ROLE_ADMIN, User.ROLE_MANAGER]
+            request.user.role in [User.ROLE_SUPERADMIN, User.ROLE_ADMIN, User.ROLE_MANAGER]
         )
 
 
@@ -44,7 +59,7 @@ class IsAccountant(BasePermission):
         return (
             request.user and
             request.user.is_authenticated and
-            request.user.role in [User.ROLE_ADMIN, User.ROLE_ACCOUNTANT]
+            request.user.role in [User.ROLE_SUPERADMIN, User.ROLE_ADMIN, User.ROLE_ACCOUNTANT]
         )
 
 
@@ -59,7 +74,7 @@ class IsWarehouse(BasePermission):
         return (
             request.user and
             request.user.is_authenticated and
-            request.user.role in [User.ROLE_ADMIN, User.ROLE_WAREHOUSE]
+            request.user.role in [User.ROLE_SUPERADMIN, User.ROLE_ADMIN, User.ROLE_WAREHOUSE]
         )
 
 
@@ -84,7 +99,7 @@ class IsAdminOrManager(BasePermission):
         return (
             request.user and
             request.user.is_authenticated and
-            request.user.role in [User.ROLE_ADMIN, User.ROLE_MANAGER]
+            request.user.role in [User.ROLE_SUPERADMIN, User.ROLE_ADMIN, User.ROLE_MANAGER]
         )
 
 
@@ -98,7 +113,7 @@ class IsAdminOrAccountant(BasePermission):
         return (
             request.user and
             request.user.is_authenticated and
-            request.user.role in [User.ROLE_ADMIN, User.ROLE_ACCOUNTANT]
+            request.user.role in [User.ROLE_SUPERADMIN, User.ROLE_ADMIN, User.ROLE_ACCOUNTANT]
         )
 
 
@@ -113,6 +128,7 @@ class IsAdminOrManagerOrAccountant(BasePermission):
             request.user and
             request.user.is_authenticated and
             request.user.role in [
+                User.ROLE_SUPERADMIN,
                 User.ROLE_ADMIN,
                 User.ROLE_MANAGER,
                 User.ROLE_ACCOUNTANT
@@ -131,7 +147,7 @@ class ReadOnlyOrAdmin(BasePermission):
         if request.method in ['GET', 'HEAD', 'OPTIONS']:
             return True
 
-        return request.user.role == User.ROLE_ADMIN
+        return request.user.role in [User.ROLE_SUPERADMIN, User.ROLE_ADMIN]
 
 
 class CanManageWarehouse(BasePermission):
@@ -148,8 +164,8 @@ class CanManageWarehouse(BasePermission):
         if request.method in ['GET', 'HEAD', 'OPTIONS']:
             return True
 
-        # Write access for admin and warehouse roles
-        return request.user.role in [User.ROLE_ADMIN, User.ROLE_WAREHOUSE]
+        # Write access for superadmin, admin and warehouse roles
+        return request.user.role in [User.ROLE_SUPERADMIN, User.ROLE_ADMIN, User.ROLE_WAREHOUSE]
 
 
 class CanManageProjects(BasePermission):
@@ -166,8 +182,8 @@ class CanManageProjects(BasePermission):
         if request.method in ['GET', 'HEAD', 'OPTIONS']:
             return True
 
-        # Write access for admin and manager roles
-        return request.user.role in [User.ROLE_ADMIN, User.ROLE_MANAGER]
+        # Write access for superadmin, admin and manager roles
+        return request.user.role in [User.ROLE_SUPERADMIN, User.ROLE_ADMIN, User.ROLE_MANAGER]
 
 
 class CanManageInvoices(BasePermission):
@@ -184,9 +200,36 @@ class CanManageInvoices(BasePermission):
         if request.method in ['GET', 'HEAD', 'OPTIONS']:
             return True
 
-        # Write access for admin, manager, and accountant roles
+        # Write access for superadmin, admin, manager, and accountant roles
         return request.user.role in [
+            User.ROLE_SUPERADMIN,
             User.ROLE_ADMIN,
             User.ROLE_MANAGER,
             User.ROLE_ACCOUNTANT
         ]
+
+
+class HasCompanyAccess(BasePermission):
+    """
+    Permission to check if user has access to the object's company.
+    SuperAdmin has access to all companies.
+    Other users only have access to their own company.
+    """
+    message = 'Nemáte přístup k datům této firmy.'
+
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        # SuperAdmin has access to everything
+        if request.user.is_superadmin:
+            return True
+
+        # Check if user belongs to the same company as the object
+        if hasattr(obj, 'company'):
+            return obj.company == request.user.company
+
+        return True

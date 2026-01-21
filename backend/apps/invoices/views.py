@@ -2,6 +2,7 @@
 Views for the invoices API.
 """
 from datetime import date
+from decimal import Decimal
 
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
@@ -13,6 +14,7 @@ from rest_framework.views import APIView
 
 from apps.projects.models import Project
 from core.permissions import IsAdminOrManager, IsAdminOrManagerOrAccountant
+from core.viewset_mixins import CompanyFilterMixin
 from .models import Invoice, InvoiceHistory, Payment
 from .serializers import (
     InvoiceCreateSerializer,
@@ -55,7 +57,7 @@ class InvoiceFilter(filters.FilterSet):
         return queryset
 
 
-class InvoiceViewSet(viewsets.ModelViewSet):
+class InvoiceViewSet(CompanyFilterMixin, viewsets.ModelViewSet):
     """
     ViewSet for invoices.
     Provides CRUD operations and additional actions.
@@ -92,7 +94,14 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         """Create invoice and return full serializer response with id."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
+
+        # Add company for non-superadmin users
+        user = request.user
+        save_kwargs = {}
+        if not user.is_superadmin:
+            save_kwargs['company'] = user.company
+
+        instance = serializer.save(**save_kwargs)
         # Return full InvoiceSerializer response
         response_serializer = InvoiceSerializer(instance)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
@@ -196,10 +205,13 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 
         serializer = PaymentCreateSerializer(data=request.data)
         if serializer.is_valid():
-            payment = serializer.save(
-                invoice=invoice,
-                created_by=request.user
-            )
+            save_kwargs = {
+                'invoice': invoice,
+                'created_by': request.user
+            }
+            if not request.user.is_superadmin:
+                save_kwargs['company'] = request.user.company
+            payment = serializer.save(**save_kwargs)
 
             InvoiceHistory.log(
                 invoice=invoice,
@@ -255,10 +267,22 @@ class ProjectsForInvoiceView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        user = request.user
         projects = Project.objects.filter(
             status__in=['active', 'planning']
-        ).order_by('-created_at')
+        )
 
+        # Filter by company
+        if user.is_superadmin:
+            company_id = request.query_params.get('company')
+            if company_id:
+                projects = projects.filter(company_id=company_id)
+        elif user.company:
+            projects = projects.filter(company=user.company)
+        else:
+            projects = projects.none()
+
+        projects = projects.order_by('-created_at')
         serializer = ProjectSelectSerializer(projects, many=True)
         return Response(serializer.data)
 
@@ -268,9 +292,18 @@ class InvoiceStatsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        from django.db.models import Sum, Count
-
+        user = request.user
         total = Invoice.objects.exclude(status=Invoice.STATUS_CANCELLED)
+
+        # Filter by company
+        if user.is_superadmin:
+            company_id = request.query_params.get('company')
+            if company_id:
+                total = total.filter(company_id=company_id)
+        elif user.company:
+            total = total.filter(company=user.company)
+        else:
+            total = total.none()
         stats = {
             'total_count': total.count(),
             'draft_count': total.filter(status=Invoice.STATUS_DRAFT).count(),
