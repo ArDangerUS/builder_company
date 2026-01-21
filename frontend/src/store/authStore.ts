@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import { User, LoginCredentials } from '../types'
+import { User, LoginCredentials, CompanyChoice } from '../types'
 import { authApi } from '../api/auth'
 
 interface AuthState {
@@ -12,11 +12,21 @@ interface AuthState {
   isLoading: boolean
   error: string | null
 
+  // SuperAdmin company selection
+  selectedCompanyId: number | null
+  selectedCompany: CompanyChoice | null
+
+  // Computed
+  isSuperAdmin: () => boolean
+  getEffectiveCompanyId: () => number | null
+
   // Actions
   login: (credentials: LoginCredentials) => Promise<void>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
   clearError: () => void
+  setSelectedCompany: (company: CompanyChoice | null) => void
+  clearSelectedCompany: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -28,6 +38,27 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      selectedCompanyId: null,
+      selectedCompany: null,
+
+      // Computed helpers
+      isSuperAdmin: () => {
+        const user = get().user
+        return user?.role === 'superadmin'
+      },
+
+      getEffectiveCompanyId: () => {
+        const user = get().user
+        if (!user) return null
+
+        // SuperAdmin uses selected company
+        if (user.role === 'superadmin') {
+          return get().selectedCompanyId
+        }
+
+        // Other users use their own company
+        return user.company ?? null
+      },
 
       login: async (credentials: LoginCredentials) => {
         set({ isLoading: true, error: null })
@@ -76,6 +107,8 @@ export const useAuthStore = create<AuthState>()(
             accessToken: null,
             refreshToken: null,
             isAuthenticated: false,
+            selectedCompanyId: null,
+            selectedCompany: null,
           })
         }
       },
@@ -91,6 +124,20 @@ export const useAuthStore = create<AuthState>()(
       },
 
       clearError: () => set({ error: null }),
+
+      setSelectedCompany: (company: CompanyChoice | null) => {
+        set({
+          selectedCompanyId: company?.id ?? null,
+          selectedCompany: company,
+        })
+      },
+
+      clearSelectedCompany: () => {
+        set({
+          selectedCompanyId: null,
+          selectedCompany: null,
+        })
+      },
     }),
     {
       name: 'auth-storage',
@@ -99,6 +146,8 @@ export const useAuthStore = create<AuthState>()(
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
+        selectedCompanyId: state.selectedCompanyId,
+        selectedCompany: state.selectedCompany,
       }),
     }
   )

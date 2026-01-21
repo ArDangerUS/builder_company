@@ -1,5 +1,83 @@
 // User types
-export type UserRole = 'admin' | 'manager' | 'accountant' | 'warehouse' | 'worker'
+export type UserRole = 'superadmin' | 'admin' | 'manager' | 'accountant' | 'warehouse' | 'worker'
+
+// Company types
+export interface Company {
+  id: number
+  name: string
+  slug: string
+  ico: string
+  dic: string
+  street: string
+  city: string
+  postal_code: string
+  country: string
+  full_address: string
+  phone: string
+  email: string
+  website: string
+  bank_name: string
+  bank_account: string
+  iban: string
+  swift: string
+  logo: string | null
+  logo_url: string | null
+  stamp: string | null
+  stamp_url: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface CompanyListItem {
+  id: number
+  name: string
+  slug: string
+  ico: string
+  city: string
+  is_active: boolean
+  users_count: number
+  created_at: string
+}
+
+export interface CompanyCreateData {
+  name: string
+  ico?: string
+  dic?: string
+  street?: string
+  city?: string
+  postal_code?: string
+  country?: string
+  phone?: string
+  email?: string
+  website?: string
+  bank_name?: string
+  bank_account?: string
+  iban?: string
+  swift?: string
+  is_active?: boolean
+  logo?: File | null
+  stamp?: File | null
+}
+
+export interface CompanyStats {
+  users_count: number
+  active_users_count: number
+  projects_count: number
+  active_projects_count: number
+  invoices_count: number
+  total_invoiced: string
+  total_paid: string
+  materials_count: number
+  suppliers_count: number
+}
+
+export interface CompanyChoice {
+  id: number
+  name: string
+  slug: string
+  ico: string
+}
 
 export interface User {
   id: number
@@ -13,6 +91,34 @@ export interface User {
   photo: string | null
   is_active: boolean
   date_joined: string
+  company?: number | null
+  company_detail?: {
+    id: number
+    name: string
+    slug: string
+  } | null
+}
+
+export interface UserListItem {
+  id: number
+  email: string
+  full_name: string
+  role: UserRole
+  is_active: boolean
+  company: number | null
+  company_name: string | null
+}
+
+export interface UserCreateData {
+  email: string
+  password: string
+  password_confirm: string
+  first_name: string
+  last_name: string
+  role: UserRole
+  phone?: string
+  position?: string
+  company?: number | null
 }
 
 // Auth types
