@@ -6,11 +6,21 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
 
 
+class CompanyMinimalSerializer(serializers.Serializer):
+    """
+    Minimal company serializer for nested representation.
+    """
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(read_only=True)
+    slug = serializers.CharField(read_only=True)
+
+
 class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for User model.
     """
     full_name = serializers.CharField(source='get_full_name', read_only=True)
+    company_detail = CompanyMinimalSerializer(source='company', read_only=True)
 
     class Meta:
         model = User
@@ -26,6 +36,8 @@ class UserSerializer(serializers.ModelSerializer):
             'photo',
             'is_active',
             'date_joined',
+            'company',
+            'company_detail',
         ]
         read_only_fields = ['id', 'date_joined']
 
@@ -52,13 +64,24 @@ class UserCreateSerializer(serializers.ModelSerializer):
             'role',
             'phone',
             'position',
+            'company',
         ]
+        extra_kwargs = {
+            'company': {'required': False},
+        }
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError({
                 'password_confirm': 'Hesla se neshodují.'
             })
+
+        # SuperAdmin role cannot have a company
+        if attrs.get('role') == User.ROLE_SUPERADMIN and attrs.get('company'):
+            raise serializers.ValidationError({
+                'company': 'SuperAdmin nemůže být přiřazen k firmě.'
+            })
+
         return attrs
 
     def create(self, validated_data):
@@ -173,7 +196,8 @@ class UserListSerializer(serializers.ModelSerializer):
     Lightweight serializer for user lists.
     """
     full_name = serializers.CharField(source='get_full_name', read_only=True)
+    company_name = serializers.CharField(source='company.name', read_only=True, allow_null=True)
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'full_name', 'role', 'is_active']
+        fields = ['id', 'email', 'full_name', 'role', 'is_active', 'company', 'company_name']

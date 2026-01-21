@@ -167,8 +167,11 @@ class PasswordResetConfirmView(APIView):
 class UserViewSet(viewsets.ModelViewSet):
     """
     ViewSet for user management (admin only).
+
+    SuperAdmin can see and manage all users across all companies.
+    Admin can only see and manage users in their own company.
     """
-    queryset = User.objects.all()
+    queryset = User.objects.select_related('company')
     permission_classes = [IsAuthenticated, IsAdmin]
 
     def get_serializer_class(self):
@@ -179,7 +182,21 @@ class UserViewSet(viewsets.ModelViewSet):
         return UserSerializer
 
     def get_queryset(self):
-        queryset = User.objects.all()
+        user = self.request.user
+        queryset = User.objects.select_related('company')
+
+        # Company filtering
+        if user.is_superadmin:
+            # SuperAdmin can filter by company
+            company_id = self.request.query_params.get('company')
+            if company_id:
+                queryset = queryset.filter(company_id=company_id)
+        elif user.company:
+            # Admin can only see users in their company
+            queryset = queryset.filter(company=user.company)
+        else:
+            # User without company sees nothing
+            queryset = queryset.none()
 
         # Filter by role
         role = self.request.query_params.get('role')
@@ -201,6 +218,21 @@ class UserViewSet(viewsets.ModelViewSet):
             )
 
         return queryset.order_by('last_name', 'first_name')
+
+    def perform_create(self, serializer):
+        """Assign company when creating user."""
+        user = self.request.user
+        save_kwargs = {}
+
+        if user.is_superadmin:
+            # SuperAdmin can specify company in request data
+            # If not specified, company will be None
+            pass
+        elif user.company:
+            # Admin assigns their own company
+            save_kwargs['company'] = user.company
+
+        serializer.save(**save_kwargs)
 
     @action(detail=True, methods=['post'])
     def activate(self, request, pk=None):
