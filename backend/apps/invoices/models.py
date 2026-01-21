@@ -21,6 +21,15 @@ class Invoice(AuditMixin, models.Model):
     Auto-generates invoice numbers in format INV-YYYY-NNN.
     Tracks status changes and calculates totals automatically.
     """
+    company = models.ForeignKey(
+        'companies.Company',
+        on_delete=models.PROTECT,
+        null=True,  # Temporary for migration
+        blank=True,
+        related_name='invoices',
+        verbose_name='Firma'
+    )
+
     # Status choices
     STATUS_DRAFT = 'draft'
     STATUS_ISSUED = 'issued'
@@ -54,7 +63,6 @@ class Invoice(AuditMixin, models.Model):
     # Invoice number
     number = models.CharField(
         max_length=20,
-        unique=True,
         verbose_name='Číslo faktury'
     )
 
@@ -149,19 +157,25 @@ class Invoice(AuditMixin, models.Model):
             models.Index(fields=['due_date']),
             models.Index(fields=['issue_date']),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['company', 'number'],
+                name='unique_invoice_number_per_company'
+            )
+        ]
 
     def __str__(self):
         return f'{self.number} - {self.client_name}'
 
-    @classmethod
-    def generate_number(cls):
+    def generate_number(self):
         """
         Generate next invoice number in format INV-YYYY-NNN.
         """
         year = date.today().year
         prefix = f'INV-{year}-'
 
-        last_invoice = cls.objects.filter(
+        last_invoice = self.__class__.objects.filter(
+            company=self.company,
             number__startswith=prefix
         ).order_by('-number').first()
 
@@ -356,6 +370,15 @@ class Payment(AuditMixin, models.Model):
     """
     Payment record for an invoice.
     """
+    company = models.ForeignKey(
+        'companies.Company',
+        on_delete=models.PROTECT,
+        null=True,  # Temporary for migration
+        blank=True,
+        related_name='payments',
+        verbose_name='Firma'
+    )
+
     PAYMENT_METHOD_CASH = 'cash'
     PAYMENT_METHOD_BANK = 'bank'
     PAYMENT_METHOD_CARD = 'card'

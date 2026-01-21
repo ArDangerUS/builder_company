@@ -18,6 +18,14 @@ class Project(AuditMixin, models.Model):
     """
     Project model representing a construction project.
     """
+    company = models.ForeignKey(
+        'companies.Company',
+        on_delete=models.PROTECT,
+        null=True,  # Temporary for migration
+        blank=True,
+        related_name='projects',
+        verbose_name='Firma'
+    )
     STATUS_PLANNING = 'planning'
     STATUS_ACTIVE = 'active'
     STATUS_SUSPENDED = 'suspended'
@@ -45,7 +53,6 @@ class Project(AuditMixin, models.Model):
     # Project info
     number = models.CharField(
         max_length=20,
-        unique=True,
         verbose_name='Číslo projektu',
         help_text='Automaticky generované: PRJ-YYYY-NNN'
     )
@@ -167,6 +174,12 @@ class Project(AuditMixin, models.Model):
             models.Index(fields=['manager']),
             models.Index(fields=['client_name']),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['company', 'number'],
+                name='unique_project_number_per_company'
+            )
+        ]
 
     def __str__(self):
         return f'{self.number} - {self.name}'
@@ -176,13 +189,13 @@ class Project(AuditMixin, models.Model):
             self.number = self.generate_number()
         super().save(*args, **kwargs)
 
-    @classmethod
-    def generate_number(cls):
+    def generate_number(self):
         """Generate unique project number in format PRJ-YYYY-NNN."""
         year = date.today().year
         prefix = f'PRJ-{year}-'
 
-        last_project = cls.objects.filter(
+        last_project = self.__class__.objects.filter(
+            company=self.company,
             number__startswith=prefix
         ).order_by('-number').first()
 
