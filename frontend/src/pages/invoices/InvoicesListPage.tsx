@@ -31,6 +31,7 @@ import dayjs from 'dayjs'
 
 import { invoicesApi } from '../../api/invoices'
 import type { InvoiceListItem, InvoiceStatus } from '../../types'
+import { useAuthStore } from '../../store/authStore'
 
 const { Title } = Typography
 const { RangePicker } = DatePicker
@@ -57,6 +58,8 @@ const statusOptions = [
 export default function InvoicesListPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { user } = useAuthStore()
+  const isSuperAdmin = user?.role === 'superadmin'
 
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
@@ -111,6 +114,15 @@ export default function InvoicesListPage() {
         </Button>
       ),
     },
+    // Company column - only for SuperAdmin
+    ...(isSuperAdmin ? [{
+      title: 'Firma',
+      dataIndex: 'company_name',
+      key: 'company',
+      width: 150,
+      ellipsis: true,
+      render: (name: string) => name || '-',
+    }] : []),
     {
       title: 'Klient',
       dataIndex: 'client_name',
