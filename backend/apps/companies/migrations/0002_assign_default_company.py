@@ -61,7 +61,6 @@ def create_default_company_and_assign(apps, schema_editor):
             "phone": existing_settings.phone or "",
             "email": existing_settings.email or "",
             "website": existing_settings.website or "",
-            "bank_name": existing_settings.bank_name or "",
             "bank_account": existing_settings.bank_account or "",
             "iban": existing_settings.iban or "",
             "swift": existing_settings.swift or "",
