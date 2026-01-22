@@ -24,7 +24,7 @@ import {
   UploadOutlined,
   DeleteOutlined,
 } from '@ant-design/icons'
-import type { UploadFile, UploadProps } from 'antd'
+import type { UploadProps } from 'antd'
 
 import { companiesApi } from '../../api/companies'
 import { CompanyCreateData } from '../../types'
