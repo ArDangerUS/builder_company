@@ -10,6 +10,7 @@ import { MaterialsPage, MaterialFormPage, StockReportPage } from './pages/wareho
 import { ReportsPage } from './pages/reports'
 import { SettingsPage } from './pages/settings'
 import { CompanyList, CompanyForm, CompanyDetail } from './pages/companies'
+import { UsersPage, UserForm } from './pages/users'
 
 // Protected Route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -89,7 +90,9 @@ function App() {
           <Route path="invoices/:id/edit" element={<InvoiceFormPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="settings" element={<SettingsPage />} />
-          <Route path="users" element={<div>Uživatelé</div>} />
+          <Route path="users" element={<UsersPage />} />
+          <Route path="users/new" element={<UserForm />} />
+          <Route path="users/:id/edit" element={<UserForm />} />
         </Route>
 
         {/* 404 */}
