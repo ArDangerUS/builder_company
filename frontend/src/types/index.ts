@@ -119,6 +119,7 @@ export interface UserCreateData {
   phone?: string
   position?: string
   company?: number | null
+  is_active?: boolean
 }
 
 // Auth types
