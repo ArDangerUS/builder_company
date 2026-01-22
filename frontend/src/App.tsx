@@ -9,6 +9,7 @@ import { InvoicesListPage, InvoiceFormPage, InvoiceDetailPage } from './pages/in
 import { MaterialsPage, MaterialFormPage, StockReportPage } from './pages/warehouse'
 import { ReportsPage } from './pages/reports'
 import { SettingsPage } from './pages/settings'
+import { CompanyList, CompanyForm, CompanyDetail } from './pages/companies'
 
 // Protected Route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -16,6 +17,17 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
+  }
+
+  return <>{children}</>
+}
+
+// SuperAdmin Route component - only for superadmin users
+const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuthStore()
+
+  if (user?.role !== 'superadmin') {
+    return <Navigate to="/" replace />
   }
 
   return <>{children}</>
@@ -56,6 +68,13 @@ function App() {
           }
         >
           <Route index element={<DashboardPage />} />
+
+          {/* SuperAdmin only - Company management */}
+          <Route path="companies" element={<SuperAdminRoute><CompanyList /></SuperAdminRoute>} />
+          <Route path="companies/new" element={<SuperAdminRoute><CompanyForm /></SuperAdminRoute>} />
+          <Route path="companies/:id" element={<SuperAdminRoute><CompanyDetail /></SuperAdminRoute>} />
+          <Route path="companies/:id/edit" element={<SuperAdminRoute><CompanyForm /></SuperAdminRoute>} />
+
           <Route path="projects" element={<ProjectsListPage />} />
           <Route path="projects/new" element={<ProjectFormPage />} />
           <Route path="projects/:id" element={<ProjectDetailPage />} />
