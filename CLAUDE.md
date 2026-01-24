@@ -48,6 +48,7 @@ project/
 │   │   ├── celery.py          # Celery configuration
 │   │   └── wsgi.py            # WSGI application
 │   ├── apps/
+│   │   ├── companies/         # Multi-tenancy & company management
 │   │   ├── users/             # User management & authentication
 │   │   ├── warehouse/         # Warehouse & materials management
 │   │   ├── projects/          # Project management
@@ -71,7 +72,7 @@ project/
 │       ├── components/        # React components
 │       │   ├── common/        # Shared components
 │       │   └── layout/        # Layout components
-│       ├── pages/             # Page components
+│       ├── pages/             # Page components (companies/, projects/, etc.)
 │       ├── hooks/             # Custom React hooks
 │       ├── store/             # Zustand stores
 │       ├── types/             # TypeScript type definitions
@@ -114,15 +115,44 @@ project/
 - API Docs: http://localhost:8000/api/docs/
 - Django Admin: http://localhost:8000/admin/
 
+## Multi-Tenancy Architecture
+
+The application supports multi-tenancy with company-based data isolation:
+
+- **Company Model**: Central model for tenant isolation
+- **Data Isolation**: All data (projects, invoices, materials, etc.) belongs to a company
+- **SuperAdmin**: Cross-company access for platform administrators
+- **Company Filtering**: Automatic queryset filtering based on user's company
+
+### Creating SuperAdmin
+
+```bash
+# Create SuperAdmin user
+docker-compose exec backend python manage.py createsuperadmin --email=admin@example.com
+
+# With all options
+docker-compose exec backend python manage.py createsuperadmin \
+  --email=admin@example.com \
+  --password=secret123 \
+  --first-name=John \
+  --last-name=Doe
+```
+
 ## User Roles
 
 | Role | Description | Permissions |
 |------|-------------|-------------|
-| `admin` | Administrator | Full access to everything |
-| `manager` | Manager | Projects, invoices, material write-offs |
-| `accountant` | Accountant | Invoices, finances, reports |
-| `warehouse` | Warehouse staff | Full warehouse access |
-| `worker` | Worker | Read-only access |
+| `superadmin` | Platform Administrator | Full access to ALL companies, company management |
+| `admin` | Company Administrator | Full access within their company |
+| `manager` | Manager | Projects, invoices, material write-offs (own company) |
+| `accountant` | Accountant | Invoices, finances, reports (own company) |
+| `warehouse` | Warehouse staff | Full warehouse access (own company) |
+| `worker` | Worker | Read-only access (own company) |
+
+### SuperAdmin vs Admin
+
+- **SuperAdmin**: No company assignment (`company=null`), can see and manage all companies
+- **Admin**: Assigned to a specific company, can only see data within their company
 
 ## API Endpoints
 
@@ -135,11 +165,20 @@ project/
 - `POST /api/v1/users/me/change-password/` - Change password
 
 ### Users (Admin only)
-- `GET /api/v1/users/` - List users
-- `POST /api/v1/users/` - Create user
+- `GET /api/v1/users/` - List users (filtered by company for Admin)
+- `POST /api/v1/users/` - Create user (assigned to Admin's company)
 - `GET /api/v1/users/{id}/` - Get user
 - `PATCH /api/v1/users/{id}/` - Update user
 - `DELETE /api/v1/users/{id}/` - Delete user
+
+### Companies (SuperAdmin only)
+- `GET /api/v1/companies/` - List all companies
+- `POST /api/v1/companies/` - Create company
+- `GET /api/v1/companies/{id}/` - Get company details
+- `PATCH /api/v1/companies/{id}/` - Update company
+- `DELETE /api/v1/companies/{id}/` - Delete company (must be empty)
+- `GET /api/v1/companies/{id}/stats/` - Get company statistics
+- `GET /api/v1/companies/choices/` - Get companies for dropdown
 
 ## Key Features (Planned)
 

@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 
 from core.exceptions import AresApiError, InvalidIcoError
 from core.permissions import CanManageProjects
+from core.viewset_mixins import CompanyFilterMixin
 
 from .models import Project, ProjectFile, ProjectHistory
 from .serializers import (
@@ -42,7 +43,7 @@ class ProjectFilter(filters.FilterSet):
         fields = ['status', 'work_type', 'manager']
 
 
-class ProjectViewSet(viewsets.ModelViewSet):
+class ProjectViewSet(CompanyFilterMixin, viewsets.ModelViewSet):
     """
     ViewSet for project management.
 
@@ -66,16 +67,21 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return ProjectSerializer
 
     def perform_create(self, serializer):
-        project = serializer.save(
-            created_by=self.request.user,
-            updated_by=self.request.user
-        )
+        user = self.request.user
+        save_kwargs = {
+            'created_by': user,
+            'updated_by': user
+        }
+        if not user.is_superadmin:
+            save_kwargs['company'] = user.company
+
+        project = serializer.save(**save_kwargs)
         # Log creation
         ProjectHistory.log_change(
             project=project,
             action=ProjectHistory.ACTION_CREATED,
             description=f'Projekt {project.number} vytvořen',
-            user=self.request.user
+            user=user
         )
 
     def perform_update(self, serializer):

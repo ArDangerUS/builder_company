@@ -8,6 +8,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     """
     Custom User model with email as the unique identifier.
     """
+    ROLE_SUPERADMIN = 'superadmin'
     ROLE_ADMIN = 'admin'
     ROLE_MANAGER = 'manager'
     ROLE_ACCOUNTANT = 'accountant'
@@ -15,12 +16,23 @@ class User(AbstractBaseUser, PermissionsMixin):
     ROLE_WORKER = 'worker'
 
     ROLE_CHOICES = [
+        (ROLE_SUPERADMIN, 'SuperAdmin'),
         (ROLE_ADMIN, 'Administrátor'),
         (ROLE_MANAGER, 'Manažer'),
         (ROLE_ACCOUNTANT, 'Účetní'),
         (ROLE_WAREHOUSE, 'Skladník'),
         (ROLE_WORKER, 'Pracovník'),
     ]
+
+    company = models.ForeignKey(
+        'companies.Company',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='users',
+        verbose_name='Firma',
+        help_text='SuperAdmin nemá přiřazenou firmu'
+    )
 
     email = models.EmailField(
         unique=True,
@@ -90,6 +102,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.first_name
 
     @property
+    def is_superadmin(self):
+        return self.role == self.ROLE_SUPERADMIN
+
+    @property
     def is_admin(self):
         return self.role == self.ROLE_ADMIN
 
@@ -110,13 +126,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.role == self.ROLE_WORKER
 
     def can_manage_warehouse(self):
-        return self.role in [self.ROLE_ADMIN, self.ROLE_WAREHOUSE]
+        return self.role in [self.ROLE_SUPERADMIN, self.ROLE_ADMIN, self.ROLE_WAREHOUSE]
 
     def can_manage_projects(self):
-        return self.role in [self.ROLE_ADMIN, self.ROLE_MANAGER]
+        return self.role in [self.ROLE_SUPERADMIN, self.ROLE_ADMIN, self.ROLE_MANAGER]
 
     def can_manage_invoices(self):
-        return self.role in [self.ROLE_ADMIN, self.ROLE_MANAGER, self.ROLE_ACCOUNTANT]
+        return self.role in [self.ROLE_SUPERADMIN, self.ROLE_ADMIN, self.ROLE_MANAGER, self.ROLE_ACCOUNTANT]
 
     def can_view_reports(self):
-        return self.role in [self.ROLE_ADMIN, self.ROLE_MANAGER, self.ROLE_ACCOUNTANT]
+        return self.role in [self.ROLE_SUPERADMIN, self.ROLE_ADMIN, self.ROLE_MANAGER, self.ROLE_ACCOUNTANT]

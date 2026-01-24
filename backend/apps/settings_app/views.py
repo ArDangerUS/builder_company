@@ -8,7 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.users.permissions import IsAdmin
+from core.permissions import IsAdmin
+from core.viewset_mixins import CompanyFilterMixin, CompanyCreateMixin
 from .models import CompanySettings, Supplier, WorkType
 from .serializers import (
     CompanySettingsSerializer,
@@ -20,7 +21,8 @@ from .serializers import (
 
 class CompanySettingsView(APIView):
     """
-    GET/PUT endpoint for company settings (singleton).
+    GET/PUT endpoint for company settings.
+    Each company has its own settings.
     Only Admin can modify settings.
     """
     permission_classes = [IsAuthenticated]
@@ -31,15 +33,40 @@ class CompanySettingsView(APIView):
             return [IsAuthenticated(), IsAdmin()]
         return [IsAuthenticated()]
 
+    def get_company(self, request):
+        """Get company for the current user."""
+        user = request.user
+        if user.is_superadmin:
+            company_id = request.query_params.get('company')
+            if company_id:
+                from apps.companies.models import Company
+                return Company.objects.filter(id=company_id).first()
+            return None
+        return user.company
+
     def get(self, request):
         """Get company settings."""
-        settings = CompanySettings.get_settings()
+        company = self.get_company(request)
+        if not company:
+            return Response(
+                {'detail': 'Firma nebyla nalezena nebo není specifikována.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        settings = CompanySettings.get_settings_for_company(company)
         serializer = CompanySettingsSerializer(settings, context={'request': request})
         return Response(serializer.data)
 
     def put(self, request):
         """Update company settings."""
-        settings = CompanySettings.get_settings()
+        company = self.get_company(request)
+        if not company:
+            return Response(
+                {'detail': 'Firma nebyla nalezena nebo není specifikována.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        settings = CompanySettings.get_settings_for_company(company)
         serializer = CompanySettingsSerializer(
             settings,
             data=request.data,
@@ -56,16 +83,17 @@ class CompanySettingsView(APIView):
         return self.put(request)
 
 
-class SupplierViewSet(viewsets.ModelViewSet):
+class SupplierViewSet(CompanyFilterMixin, CompanyCreateMixin, viewsets.ModelViewSet):
     """
     CRUD ViewSet for Suppliers.
     """
+    queryset = Supplier.objects.all()
     permission_classes = [IsAuthenticated]
     serializer_class = SupplierSerializer
     pagination_class = None  # Disable pagination for simple list
 
     def get_queryset(self):
-        queryset = Supplier.objects.all()
+        queryset = super().get_queryset()
 
         # Filter by active status
         is_active = self.request.query_params.get('is_active')
@@ -84,23 +112,18 @@ class SupplierViewSet(viewsets.ModelViewSet):
             return SupplierListSerializer
         return SupplierSerializer
 
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
 
-    def perform_update(self, serializer):
-        serializer.save(updated_by=self.request.user)
-
-
-class WorkTypeViewSet(viewsets.ModelViewSet):
+class WorkTypeViewSet(CompanyFilterMixin, CompanyCreateMixin, viewsets.ModelViewSet):
     """
     CRUD ViewSet for Work Types.
     """
+    queryset = WorkType.objects.all()
     permission_classes = [IsAuthenticated]
     serializer_class = WorkTypeSerializer
     pagination_class = None  # Disable pagination for simple list
 
     def get_queryset(self):
-        queryset = WorkType.objects.all()
+        queryset = super().get_queryset()
 
         # Filter by active status
         is_active = self.request.query_params.get('is_active')
@@ -109,14 +132,9 @@ class WorkTypeViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
-
-    def perform_update(self, serializer):
-        serializer.save(updated_by=self.request.user)
-
     @action(detail=False, methods=['get'])
     def choices(self, request):
         """Get work types as choices for select fields."""
-        work_types = WorkType.objects.filter(is_active=True).values('id', 'name', 'code')
+        queryset = self.get_queryset().filter(is_active=True)
+        work_types = queryset.values('id', 'name', 'code')
         return Response(list(work_types))

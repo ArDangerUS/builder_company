@@ -30,6 +30,7 @@ import dayjs from 'dayjs'
 import { projectsApi, ProjectFilters } from '../../api/projects'
 import { ProjectListItem, ProjectStatus } from '../../types'
 import { formatCurrency, formatDate } from '../../utils'
+import { useAuthStore } from '../../store/authStore'
 
 const { Title } = Typography
 const { RangePicker } = DatePicker
@@ -64,6 +65,9 @@ const workTypeOptions = [
 
 const ProjectsListPage = () => {
   const navigate = useNavigate()
+  const { user } = useAuthStore()
+  const isSuperAdmin = user?.role === 'superadmin'
+
   const [filters, setFilters] = useState<ProjectFilters>({
     page: 1,
     page_size: 50,
@@ -138,6 +142,15 @@ const ProjectsListPage = () => {
       ellipsis: true,
       sorter: true,
     },
+    // Company column - only for SuperAdmin
+    ...(isSuperAdmin ? [{
+      title: 'Firma',
+      dataIndex: 'company_name',
+      key: 'company',
+      width: 150,
+      ellipsis: true,
+      render: (name: string) => name || '-',
+    }] : []),
     {
       title: 'Klient',
       dataIndex: 'client_name',

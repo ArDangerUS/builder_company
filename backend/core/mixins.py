@@ -2,6 +2,21 @@ from django.conf import settings
 from django.db import models
 
 
+class CompanyMixin(models.Model):
+    """Mixin that adds company field for multi-tenancy."""
+    company = models.ForeignKey(
+        'companies.Company',
+        on_delete=models.PROTECT,
+        null=True,  # Temporary for migration
+        blank=True,
+        related_name='%(class)ss',
+        verbose_name='Firma'
+    )
+
+    class Meta:
+        abstract = True
+
+
 class AuditMixin(models.Model):
     """
     Mixin that adds audit fields to models.

@@ -9,7 +9,7 @@ from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from core.mixins import AuditMixin
+from core.mixins import AuditMixin, CompanyMixin
 
 
 def material_photo_path(instance, filename):
@@ -22,13 +22,12 @@ def receipt_file_path(instance, filename):
     return f'warehouse/receipts/{instance.number}/{filename}'
 
 
-class Category(AuditMixin, models.Model):
+class Category(CompanyMixin, AuditMixin, models.Model):
     """
     Category for materials.
     """
     name = models.CharField(
         max_length=100,
-        unique=True,
         verbose_name='Název kategorie'
     )
     description = models.TextField(
@@ -48,6 +47,12 @@ class Category(AuditMixin, models.Model):
         verbose_name = 'Kategorie'
         verbose_name_plural = 'Kategorie'
         ordering = ['order', 'name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['company', 'name'],
+                name='unique_category_name_per_company'
+            )
+        ]
 
     def __str__(self):
         return self.name
@@ -72,7 +77,7 @@ class Category(AuditMixin, models.Model):
             )
 
 
-class Material(AuditMixin, models.Model):
+class Material(CompanyMixin, AuditMixin, models.Model):
     """
     Material in warehouse inventory.
     """
@@ -95,7 +100,6 @@ class Material(AuditMixin, models.Model):
     )
     sku = models.CharField(
         max_length=50,
-        unique=True,
         verbose_name='Kód/SKU',
         help_text='Unikátní identifikátor materiálu'
     )
@@ -163,6 +167,12 @@ class Material(AuditMixin, models.Model):
             models.Index(fields=['name']),
             models.Index(fields=['category']),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['company', 'sku'],
+                name='unique_material_sku_per_company'
+            )
+        ]
 
     def __str__(self):
         return f'{self.sku} - {self.name}'
@@ -178,7 +188,7 @@ class Material(AuditMixin, models.Model):
         return self.current_stock * self.purchase_price
 
 
-class StockReceipt(AuditMixin, models.Model):
+class StockReceipt(CompanyMixin, AuditMixin, models.Model):
     """
     Stock receipt document for incoming materials.
     """
@@ -194,7 +204,6 @@ class StockReceipt(AuditMixin, models.Model):
 
     number = models.CharField(
         max_length=20,
-        unique=True,
         verbose_name='Číslo příjemky'
     )
     receipt_date = models.DateField(
@@ -244,6 +253,12 @@ class StockReceipt(AuditMixin, models.Model):
             models.Index(fields=['status']),
             models.Index(fields=['receipt_date']),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['company', 'number'],
+                name='unique_stockreceipt_number_per_company'
+            )
+        ]
 
     def __str__(self):
         return f'{self.number} - {self.supplier.name}'
@@ -253,13 +268,13 @@ class StockReceipt(AuditMixin, models.Model):
             self.number = self.generate_number()
         super().save(*args, **kwargs)
 
-    @classmethod
-    def generate_number(cls):
+    def generate_number(self):
         """Generate unique receipt number in format SR-YYYY-NNN."""
         year = date.today().year
         prefix = f'SR-{year}-'
 
-        last_receipt = cls.objects.filter(
+        last_receipt = self.__class__.objects.filter(
+            company=self.company,
             number__startswith=prefix
         ).order_by('-number').first()
 
@@ -332,7 +347,7 @@ class StockReceiptItem(models.Model):
         super().save(*args, **kwargs)
 
 
-class StockWriteOff(AuditMixin, models.Model):
+class StockWriteOff(CompanyMixin, AuditMixin, models.Model):
     """
     Stock write-off document for outgoing materials to projects.
     """
@@ -348,7 +363,6 @@ class StockWriteOff(AuditMixin, models.Model):
 
     number = models.CharField(
         max_length=20,
-        unique=True,
         verbose_name='Číslo výdejky'
     )
     writeoff_date = models.DateField(
@@ -388,6 +402,12 @@ class StockWriteOff(AuditMixin, models.Model):
             models.Index(fields=['writeoff_date']),
             models.Index(fields=['project']),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['company', 'number'],
+                name='unique_stockwriteoff_number_per_company'
+            )
+        ]
 
     def __str__(self):
         return f'{self.number} - {self.project.name}'
@@ -397,13 +417,13 @@ class StockWriteOff(AuditMixin, models.Model):
             self.number = self.generate_number()
         super().save(*args, **kwargs)
 
-    @classmethod
-    def generate_number(cls):
+    def generate_number(self):
         """Generate unique write-off number in format SW-YYYY-NNN."""
         year = date.today().year
         prefix = f'SW-{year}-'
 
-        last_writeoff = cls.objects.filter(
+        last_writeoff = self.__class__.objects.filter(
+            company=self.company,
             number__startswith=prefix
         ).order_by('-number').first()
 

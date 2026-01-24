@@ -23,9 +23,11 @@ import {
   MenuUnfoldOutlined,
   AppstoreOutlined,
   UnorderedListOutlined,
+  BankOutlined,
 } from '@ant-design/icons'
 
 import { useAuthStore } from '../../store/authStore'
+import CompanySelector from './CompanySelector'
 
 const { Header, Sider, Content } = Layout
 const { Text } = Typography
@@ -38,9 +40,10 @@ const MainLayout = () => {
   const { token } = theme.useToken()
 
   // Check user permissions
-  const isAdmin = user?.role === 'admin'
-  const canViewReports = ['admin', 'manager', 'accountant'].includes(user?.role || '')
-  const canViewInvoices = ['admin', 'manager', 'accountant'].includes(user?.role || '')
+  const isSuperAdmin = user?.role === 'superadmin'
+  const isAdmin = user?.role === 'admin' || isSuperAdmin
+  const canViewReports = ['superadmin', 'admin', 'manager', 'accountant'].includes(user?.role || '')
+  const canViewInvoices = ['superadmin', 'admin', 'manager', 'accountant'].includes(user?.role || '')
 
   const menuItems: MenuProps['items'] = useMemo(() => {
     const items: MenuProps['items'] = [
@@ -93,6 +96,15 @@ const MainLayout = () => {
 
     items.push({ type: 'divider' })
 
+    // Companies - only superadmin
+    if (isSuperAdmin) {
+      items.push({
+        key: '/companies',
+        icon: <BankOutlined />,
+        label: 'Firmy',
+      })
+    }
+
     // Users - only admin
     if (isAdmin) {
       items.push({
@@ -109,7 +121,7 @@ const MainLayout = () => {
     })
 
     return items
-  }, [isAdmin, canViewReports, canViewInvoices])
+  }, [isSuperAdmin, isAdmin, canViewReports, canViewInvoices])
 
   const userMenuItems: MenuProps['items'] = [
     {
@@ -199,25 +211,30 @@ const MainLayout = () => {
             {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
           </div>
 
-          <Dropdown menu={{ items: userMenuItems, onClick: handleUserMenuClick }} trigger={['click']}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                cursor: 'pointer',
-              }}
-            >
-              <Avatar icon={<UserOutlined />} src={user?.photo} />
-              <div style={{ lineHeight: 1.2 }}>
-                <Text strong>{user?.full_name}</Text>
-                <br />
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  {user?.position || user?.role}
-                </Text>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+            {/* Company Selector for SuperAdmin */}
+            {isSuperAdmin && <CompanySelector />}
+
+            <Dropdown menu={{ items: userMenuItems, onClick: handleUserMenuClick }} trigger={['click']}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  cursor: 'pointer',
+                }}
+              >
+                <Avatar icon={<UserOutlined />} src={user?.photo} />
+                <div style={{ lineHeight: 1.2 }}>
+                  <Text strong>{user?.full_name}</Text>
+                  <br />
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    {user?.position || user?.role}
+                  </Text>
+                </div>
               </div>
-            </div>
-          </Dropdown>
+            </Dropdown>
+          </div>
         </Header>
 
         <Content

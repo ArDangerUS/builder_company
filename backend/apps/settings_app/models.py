@@ -24,9 +24,19 @@ def company_signature_path(instance, filename):
 
 class CompanySettings(AuditMixin, models.Model):
     """
-    Singleton model for company settings.
+    Company settings model for multi-tenant architecture.
+    Each company has its own settings (one-to-one with Company).
     Contains all company information used in documents.
     """
+    company = models.OneToOneField(
+        'companies.Company',
+        on_delete=models.CASCADE,
+        null=True,  # Temporary for migration
+        blank=True,
+        related_name='settings',
+        verbose_name='Firma'
+    )
+
     # Company name
     company_name_cs = models.CharField(
         max_length=255,
@@ -151,27 +161,21 @@ class CompanySettings(AuditMixin, models.Model):
         verbose_name_plural = 'Nastavení firmy'
 
     def __str__(self):
+        if self.company:
+            return f'Nastavení - {self.company.name}'
         return self.company_name_cs or 'Nastavení firmy'
 
-    def save(self, *args, **kwargs):
-        # Ensure only one instance exists (singleton pattern)
-        if not self.pk and CompanySettings.objects.exists():
-            # Update existing instance instead of creating new
-            existing = CompanySettings.objects.first()
-            self.pk = existing.pk
-        super().save(*args, **kwargs)
-
     @classmethod
-    def get_settings(cls):
-        """Get or create the singleton settings instance."""
+    def get_settings_for_company(cls, company):
+        """Get or create settings for a company."""
         settings, _ = cls.objects.get_or_create(
-            pk=1,
+            company=company,
             defaults={
-                'company_name_cs': 'Vaše firma s.r.o.',
-                'ico': '00000000',
-                'street': 'Ulice 123',
-                'city': 'Praha',
-                'postal_code': '10000',
+                'company_name_cs': company.name,
+                'ico': company.ico or '00000000',
+                'street': company.street or 'Ulice 123',
+                'city': company.city or 'Praha',
+                'postal_code': company.postal_code or '10000',
             }
         )
         return settings
@@ -189,6 +193,15 @@ class Supplier(AuditMixin, models.Model):
     """
     Supplier/vendor model for tracking external companies.
     """
+    company = models.ForeignKey(
+        'companies.Company',
+        on_delete=models.PROTECT,
+        null=True,  # Temporary for migration
+        blank=True,
+        related_name='suppliers',
+        verbose_name='Firma'
+    )
+
     name = models.CharField(
         max_length=255,
         verbose_name='Název dodavatele'
@@ -254,14 +267,21 @@ class WorkType(AuditMixin, models.Model):
     """
     Work type categories for projects.
     """
+    company = models.ForeignKey(
+        'companies.Company',
+        on_delete=models.PROTECT,
+        null=True,  # Temporary for migration
+        blank=True,
+        related_name='work_types',
+        verbose_name='Firma'
+    )
+
     name = models.CharField(
         max_length=100,
-        unique=True,
         verbose_name='Název typu práce'
     )
     code = models.CharField(
         max_length=20,
-        unique=True,
         verbose_name='Kód',
         help_text='Krátký kód pro identifikaci'
     )
@@ -278,6 +298,16 @@ class WorkType(AuditMixin, models.Model):
         verbose_name = 'Typ práce'
         verbose_name_plural = 'Typy prací'
         ordering = ['name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['company', 'name'],
+                name='unique_worktype_name_per_company'
+            ),
+            models.UniqueConstraint(
+                fields=['company', 'code'],
+                name='unique_worktype_code_per_company'
+            )
+        ]
 
     def __str__(self):
         return self.name

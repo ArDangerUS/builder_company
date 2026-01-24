@@ -10,13 +10,44 @@ const apiClient = axios.create({
   },
 })
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token and company parameter for SuperAdmin
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('access_token')
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
     }
+
+    // Add company parameter for SuperAdmin if selected
+    // Get auth state from localStorage (persisted by zustand)
+    const authStorage = localStorage.getItem('auth-storage')
+    if (authStorage) {
+      try {
+        const authState = JSON.parse(authStorage)
+        const user = authState?.state?.user
+        const selectedCompanyId = authState?.state?.selectedCompanyId
+
+        // If SuperAdmin has selected a company, add it to requests
+        if (user?.role === 'superadmin' && selectedCompanyId) {
+          // Don't add company param to company management endpoints
+          const isCompanyEndpoint = config.url?.startsWith('/companies')
+
+          if (!isCompanyEndpoint) {
+            // Add company to query params
+            const url = new URL(config.url || '', 'http://localhost')
+
+            // Only add if not already present
+            if (!url.searchParams.has('company')) {
+              url.searchParams.append('company', String(selectedCompanyId))
+              config.url = url.pathname + url.search
+            }
+          }
+        }
+      } catch {
+        // Ignore parsing errors
+      }
+    }
+
     return config
   },
   (error) => {
@@ -49,14 +80,16 @@ apiClient.interceptors.response.use(
           }
           return apiClient(originalRequest)
         } catch (refreshError) {
-          // Refresh failed, clear tokens and redirect to login
+          // Refresh failed, clear all auth data and redirect to login
           localStorage.removeItem('access_token')
           localStorage.removeItem('refresh_token')
+          localStorage.removeItem('auth-storage')
           window.location.href = '/login'
           return Promise.reject(refreshError)
         }
       } else {
-        // No refresh token, redirect to login
+        // No refresh token, clear auth storage and redirect to login
+        localStorage.removeItem('auth-storage')
         window.location.href = '/login'
       }
     }
