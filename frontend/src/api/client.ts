@@ -80,14 +80,16 @@ apiClient.interceptors.response.use(
           }
           return apiClient(originalRequest)
         } catch (refreshError) {
-          // Refresh failed, clear tokens and redirect to login
+          // Refresh failed, clear all auth data and redirect to login
           localStorage.removeItem('access_token')
           localStorage.removeItem('refresh_token')
+          localStorage.removeItem('auth-storage')
           window.location.href = '/login'
           return Promise.reject(refreshError)
         }
       } else {
-        // No refresh token, redirect to login
+        // No refresh token, clear auth storage and redirect to login
+        localStorage.removeItem('auth-storage')
         window.location.href = '/login'
       }
     }
