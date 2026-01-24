@@ -224,6 +224,12 @@ class UserViewSet(viewsets.ModelViewSet):
         user = self.request.user
         save_kwargs = {}
 
+        # Security: Only SuperAdmin can create SuperAdmin users
+        requested_role = serializer.validated_data.get('role')
+        if requested_role == 'superadmin' and not user.is_superadmin:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('Pouze SuperAdmin může vytvářet SuperAdmin uživatele.')
+
         if user.is_superadmin:
             # SuperAdmin can specify company in request data
             # If not specified, company will be None
@@ -233,6 +239,18 @@ class UserViewSet(viewsets.ModelViewSet):
             save_kwargs['company'] = user.company
 
         serializer.save(**save_kwargs)
+
+    def perform_update(self, serializer):
+        """Prevent non-SuperAdmin from promoting users to SuperAdmin."""
+        user = self.request.user
+        requested_role = serializer.validated_data.get('role')
+
+        # Security: Only SuperAdmin can set role to superadmin
+        if requested_role == 'superadmin' and not user.is_superadmin:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('Pouze SuperAdmin může nastavit roli SuperAdmin.')
+
+        serializer.save()
 
     @action(detail=True, methods=['post'])
     def activate(self, request, pk=None):
