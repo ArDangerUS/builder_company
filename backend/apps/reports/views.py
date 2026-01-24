@@ -32,21 +32,31 @@ class DashboardView(APIView):
         today = date.today()
         current_month_start = today.replace(day=1)
 
+        # Get company filter
+        company_id = request.query_params.get('company')
+
+        # Base querysets with company filter
+        projects_qs = Project.objects.all()
+        invoices_qs = Invoice.objects.all()
+        payments_qs = Payment.objects.all()
+
+        if company_id:
+            projects_qs = projects_qs.filter(company_id=company_id)
+            invoices_qs = invoices_qs.filter(company_id=company_id)
+            payments_qs = payments_qs.filter(invoice__company_id=company_id)
+        elif request.user.role != 'superadmin' and request.user.company_id:
+            # Non-superadmin users see only their company data
+            projects_qs = projects_qs.filter(company_id=request.user.company_id)
+            invoices_qs = invoices_qs.filter(company_id=request.user.company_id)
+            payments_qs = payments_qs.filter(invoice__company_id=request.user.company_id)
+
         # Calculate stats
-        active_projects_count = Project.objects.filter(
+        active_projects_count = projects_qs.filter(
             status__in=['planning', 'in_progress']
         ).count()
 
-        # Invoices this month
-        invoices_this_month = Invoice.objects.filter(
-            issue_date__gte=current_month_start,
-            status__in=['issued', 'partially_paid', 'paid']
-        ).aggregate(
-            total=Sum('items__quantity', default=0) * Sum('items__unit_price', default=0)
-        )
-
         # Calculate invoiced amount this month properly
-        month_invoices = Invoice.objects.filter(
+        month_invoices = invoices_qs.filter(
             issue_date__gte=current_month_start,
             status__in=['issued', 'partially_paid', 'paid']
         )
@@ -55,12 +65,12 @@ class DashboardView(APIView):
             invoiced_this_month += inv.total_amount
 
         # Payments this month
-        paid_this_month = Payment.objects.filter(
+        paid_this_month = payments_qs.filter(
             payment_date__gte=current_month_start
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
 
         # Total outstanding (unpaid amount)
-        outstanding_invoices = Invoice.objects.filter(
+        outstanding_invoices = invoices_qs.filter(
             status__in=['issued', 'partially_paid']
         )
         total_outstanding = Decimal('0')
@@ -68,7 +78,7 @@ class DashboardView(APIView):
             total_outstanding += inv.amount_due
 
         # Overdue invoices count
-        overdue_count = Invoice.objects.filter(
+        overdue_count = invoices_qs.filter(
             status__in=['issued', 'partially_paid'],
             due_date__lt=today
         ).count()
@@ -86,15 +96,15 @@ class DashboardView(APIView):
                 month_end = month_date.replace(month=month_date.month+1, day=1) - timedelta(days=1)
 
             # Issued this month
-            month_invoices = Invoice.objects.filter(
+            month_invoices_chart = invoices_qs.filter(
                 issue_date__gte=month_start,
                 issue_date__lte=month_end,
                 status__in=['issued', 'partially_paid', 'paid']
             )
-            issued_amount = sum(inv.total_amount for inv in month_invoices)
+            issued_amount = sum(inv.total_amount for inv in month_invoices_chart)
 
             # Paid this month
-            paid_amount = Payment.objects.filter(
+            paid_amount = payments_qs.filter(
                 payment_date__gte=month_start,
                 payment_date__lte=month_end
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
@@ -110,7 +120,7 @@ class DashboardView(APIView):
 
         # Chart: Projects by status
         projects_by_status = list(
-            Project.objects.values('status')
+            projects_qs.values('status')
             .annotate(count=Count('id'))
             .order_by('status')
         )
@@ -127,7 +137,7 @@ class DashboardView(APIView):
             item['status_display'] = status_labels.get(item['status'], item['status'])
 
         # Top 5 projects by budget
-        top_projects_qs = Project.objects.filter(planned_budget__gt=0).order_by('-planned_budget')[:5]
+        top_projects_qs = projects_qs.filter(planned_budget__gt=0).order_by('-planned_budget')[:5]
         top_projects = []
         for proj in top_projects_qs:
             top_projects.append({
@@ -140,7 +150,7 @@ class DashboardView(APIView):
 
         # Recent projects (5)
         recent_projects = list(
-            Project.objects.order_by('-created_at')[:5]
+            projects_qs.order_by('-created_at')[:5]
             .values('id', 'number', 'name', 'client_name', 'status', 'created_at')
         )
 
@@ -150,7 +160,7 @@ class DashboardView(APIView):
 
         # Recent invoices (5)
         recent_invoices = list(
-            Invoice.objects.order_by('-created_at')[:5]
+            invoices_qs.order_by('-created_at')[:5]
             .values('id', 'number', 'client_name', 'status', 'issue_date', 'due_date')
         )
 
@@ -172,7 +182,7 @@ class DashboardView(APIView):
 
         # Overdue invoices (5)
         overdue_invoices = []
-        overdue_qs = Invoice.objects.filter(
+        overdue_qs = invoices_qs.filter(
             status__in=['issued', 'partially_paid'],
             due_date__lt=today
         ).order_by('due_date')[:5]
