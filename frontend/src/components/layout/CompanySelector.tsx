@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Select, Space, Typography, Tag, message } from 'antd'
 import { BankOutlined, GlobalOutlined } from '@ant-design/icons'
 
@@ -10,6 +10,7 @@ const { Text } = Typography
 
 const CompanySelector = () => {
   const { selectedCompanyId, selectedCompany, setSelectedCompany, user } = useAuthStore()
+  const queryClient = useQueryClient()
 
   // Fetch company choices
   const { data: companies, isLoading } = useQuery({
@@ -39,6 +40,8 @@ const CompanySelector = () => {
         message.success(`Přepnuto na firmu: ${company.name}`)
       }
     }
+    // Invalidate all queries to refetch with new company filter
+    queryClient.invalidateQueries()
   }
 
   if (user?.role !== 'superadmin') {
